@@ -1,0 +1,12 @@
+{
+  "name": "transitive-npm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fixture: clean direct dependency, vulnerable transitive one (pinned by overrides).",
+  "dependencies": {
+    "strip-ansi": "5.2.0"
+  },
+  "overrides": {
+    "ansi-regex": "4.1.0"
+  }
+}

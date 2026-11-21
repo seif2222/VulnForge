@@ -1,0 +1,12 @@
+{
+  "name": "unresolved-npm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fixture: no lockfile, so only exact pins resolve.",
+  "dependencies": {
+    "left-pad": "1.3.0",
+    "lodash": "^4.17.21",
+    "chalk": "*",
+    "secret-dep": "git+https://github.com/example/secret-dep.git"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "vulnerable-npm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fixture: three direct dependencies with recorded osv.dev advisories.",
+  "dependencies": {
+    "lodash": "4.17.20",
+    "minimist": "1.2.5",
+    "qs": "5.2.0"
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 6,
+  "meta": {
+    "tool": { "name": "vulnforge", "version": "0.1.0" },
+    "generatedAt": "2026-10-08T12:00:00Z",
+    "projectName": "vulnerable-example",
+    "ecosystem": "pypi",
+    "manifestPath": "requirements.txt",
+    "unresolved": [],
+    "incomplete": [],
+    "ignored": [],
+    "warnings": []
+  },
+  "packages": [
+    {
+      "name": "PyYAML",
+      "version": "5.3.1",
+      "isDirect": true,
+      "depth": 0,
+      "parents": [],
+      "isDev": null
+    },
+    {
+      "name": "Jinja2",
+      "version": "3.1.2",
+      "isDirect": true,
+      "depth": 0,
+      "parents": [],
+      "isDev": null
+    },
+    {
+      "name": "requests",
+      "version": "2.19.1",
+      "isDirect": true,
+      "depth": 0,
+      "parents": [],
+      "isDev": null
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "id": "CVE-2020-14343",
+      "findingKey": "CVE-2020-14343|PyYAML@5.3.1",
+      "aliases": ["GHSA-8q59-q68h-6hv4", "PYSEC-2021-142"],
+      "package": "PyYAML",
+      "installedVersion": "5.3.1",
+      "severity": "critical",
+      "severityReason": "github_rating",
+      "cvss": {
+        "score": 9.8,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+      },
+      "summary": "Improper Input Validation in PyYAML",
+      "affectedRange": ">=0 <5.4",
+      "fixedVersion": "5.4",
+      "advisoryUrl": "https://github.com/advisories/GHSA-8q59-q68h-6hv4",
+      "source": "osv.dev"
+    },
+    {
+      "id": "CVE-2018-18074",
+      "findingKey": "CVE-2018-18074|requests@2.19.1",
+      "aliases": ["GHSA-x84v-xcm2-53pg", "PYSEC-2018-28"],
+      "package": "requests",
+      "installedVersion": "2.19.1",
+      "severity": "high",
+      "severityReason": "github_rating",
+      "cvss": {
+        "score": 7.5,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+      },
+      "summary": "Insufficiently Protected Credentials in Requests",
+      "affectedRange": ">=0 <2.20.0",
+      "fixedVersion": "2.20.0",
+      "advisoryUrl": "https://github.com/advisories/GHSA-x84v-xcm2-53pg",
+      "source": "osv.dev"
+    },
+    {
+      "id": "CVE-2023-32681",
+      "findingKey": "CVE-2023-32681|requests@2.19.1",
+      "aliases": ["GHSA-j8r2-6x86-q33q", "PYSEC-2023-74"],
+      "package": "requests",
+      "installedVersion": "2.19.1",
+      "severity": "medium",
+      "severityReason": "github_rating",
+      "cvss": {
+        "score": 6.1,
+        "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:N/A:N"
+      },
+      "summary": "Unintended leak of Proxy-Authorization header in requests",
+      "affectedRange": ">=2.3.0 <2.31.0",
+      "fixedVersion": "2.31.0",
+      "advisoryUrl": "https://github.com/advisories/GHSA-j8r2-6x86-q33q",
+      "source": "osv.dev"
+    },
+    {
+      "id": "CVE-2024-22195",
+      "findingKey": "CVE-2024-22195|Jinja2@3.1.2",
+      "aliases": ["GHSA-h5c8-rqwp-cp95", "PYSEC-2026-1473"],
+      "package": "Jinja2",
+      "installedVersion": "3.1.2",
+      "severity": "medium",
+      "severityReason": "github_rating",
+      "cvss": {
+        "score": 5.4,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N"
+      },
+      "summary": "Jinja vulnerable to HTML attribute injection when passing user input as keys to xmlattr filter",
+      "affectedRange": ">=0 <3.1.3",
+      "fixedVersion": "3.1.3",
+      "advisoryUrl": "https://github.com/advisories/GHSA-h5c8-rqwp-cp95",
+      "source": "osv.dev"
+    }
+  ],
+  "risk": [
+    {
+      "findingKey": "CVE-2020-14343|PyYAML@5.3.1",
+      "priorityScore": 95,
+      "flags": { "isReachable": null, "isDirect": true, "hasFix": true },
+      "reasons": ["severity-critical", "direct-dependency", "fix-available", "reachability-unknown"]
+    },
+    {
+      "findingKey": "CVE-2018-18074|requests@2.19.1",
+      "priorityScore": 80,
+      "flags": { "isReachable": null, "isDirect": true, "hasFix": true },
+      "reasons": ["severity-high", "direct-dependency", "fix-available", "reachability-unknown"]
+    },
+    {
+      "findingKey": "CVE-2023-32681|requests@2.19.1",
+      "priorityScore": 60,
+      "flags": { "isReachable": null, "isDirect": true, "hasFix": true },
+      "reasons": ["severity-medium", "direct-dependency", "fix-available", "reachability-unknown"]
+    },
+    {
+      "findingKey": "CVE-2024-22195|Jinja2@3.1.2",
+      "priorityScore": 60,
+      "flags": { "isReachable": null, "isDirect": true, "hasFix": true },
+      "reasons": ["severity-medium", "direct-dependency", "fix-available", "reachability-unknown"]
+    }
+  ],
+  "suggestions": [
+    {
+      "findingKey": "CVE-2020-14343|PyYAML@5.3.1",
+      "saferVersion": "5.4",
+      "alternativePackage": null,
+      "rationale": "Upgrade PyYAML to 5.4 or later; the yaml.full_load sink this advisory covers was removed from the 5.4 line.",
+      "provider": "llm"
+    }
+  ],
+  "stats": {
+    "totalPackages": 3,
+    "directPackages": 3,
+    "transitivePackages": 0,
+    "totalVulnerabilities": 4,
+    "bySeverity": { "critical": 1, "high": 1, "medium": 2, "low": 0 },
+    "unresolvedCount": 0,
+    "ignoredCount": 0
+  }
+}

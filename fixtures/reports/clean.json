@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 6,
+  "meta": {
+    "tool": { "name": "vulnforge", "version": "0.1.0" },
+    "generatedAt": "2026-10-08T12:00:00Z",
+    "projectName": "clean-example",
+    "ecosystem": "npm",
+    "manifestPath": "package.json",
+    "unresolved": [],
+    "incomplete": [],
+    "ignored": [],
+    "warnings": []
+  },
+  "packages": [
+    {
+      "name": "body-parser",
+      "version": "1.20.2",
+      "isDirect": true,
+      "depth": 0,
+      "parents": [],
+      "isDev": false
+    },
+    {
+      "name": "express",
+      "version": "4.19.2",
+      "isDirect": true,
+      "depth": 0,
+      "parents": [],
+      "isDev": false
+    },
+    {
+      "name": "accepts",
+      "version": "1.3.8",
+      "isDirect": false,
+      "depth": 1,
+      "parents": ["express@4.19.2"],
+      "isDev": false
+    },
+    {
+      "name": "content-type",
+      "version": "1.0.5",
+      "isDirect": false,
+      "depth": 1,
+      "parents": ["express@4.19.2"],
+      "isDev": false
+    },
+    {
+      "name": "array-flatten",
+      "version": "1.1.1",
+      "isDirect": false,
+      "depth": 1,
+      "parents": ["express@4.19.2"],
+      "isDev": false
+    }
+  ],
+  "vulnerabilities": [],
+  "risk": [],
+  "suggestions": [],
+  "stats": {
+    "totalPackages": 5,
+    "directPackages": 2,
+    "transitivePackages": 3,
+    "totalVulnerabilities": 0,
+    "bySeverity": { "critical": 0, "high": 0, "medium": 0, "low": 0 },
+    "unresolvedCount": 0,
+    "ignoredCount": 0
+  }
+}
