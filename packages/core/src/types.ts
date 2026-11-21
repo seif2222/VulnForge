@@ -67,7 +67,7 @@ export const IGNORE_SOURCES = ['file', 'flag'] as const;
 export type IgnoreSource = (typeof IGNORE_SOURCES)[number];
 
 /**
- * A finding suppressed by `.depscanignore` or `--ignore`. Counted and listed, never
+ * A finding suppressed by `.vulnforgeignore` or `--ignore`. Counted and listed, never
  * silently dropped. `matchedFindingKeys` is empty when the rule matched nothing.
  */
 export interface IgnoredFinding {

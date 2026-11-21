@@ -115,7 +115,7 @@ describe('analyzeProject pipeline', () => {
     expect(validateReport(result.report).ok).toBe(true);
   });
 
-  it('reads .depscanignore from the project directory', async () => {
+  it('reads .vulnforgeignore from the project directory', async () => {
     const project = tempDir();
     writeFileSync(
       join(project, 'package.json'),
@@ -125,7 +125,7 @@ describe('analyzeProject pipeline', () => {
         dependencies: { minimist: '1.2.5' },
       }),
     );
-    writeFileSync(join(project, '.depscanignore'), 'CVE-2021-44906 # accepted\n');
+    writeFileSync(join(project, '.vulnforgeignore'), 'CVE-2021-44906 # accepted\n');
 
     const recordings = loadOsvRecordings();
     const cache = createMemoryCache();

@@ -62,10 +62,10 @@ export function cacheKeyFor(query: OsvQuery): string {
 }
 
 export function defaultCacheDir(): string {
-  const override = process.env['DEPSCAN_CACHE_DIR'];
+  const override = process.env['VULNFORGE_CACHE_DIR'];
   return override !== undefined && override.length > 0
     ? override
-    : join(homedir(), '.depscan', 'cache', 'osv');
+    : join(homedir(), '.vulnforge', 'cache', 'osv');
 }
 
 function fileNameFor(key: string): string {

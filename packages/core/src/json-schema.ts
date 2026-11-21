@@ -2,7 +2,7 @@ export type JsonSchemaType =
   'object' | 'array' | 'string' | 'number' | 'integer' | 'boolean' | 'null';
 
 /**
- * The subset of JSON Schema (draft 2020-12) used by depscan. Unsupported keywords are
+ * The subset of JSON Schema (draft 2020-12) used by vulnforge. Unsupported keywords are
  * deliberately absent so that a schema can never appear to validate more than this
  * validator actually enforces.
  */

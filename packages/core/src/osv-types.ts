@@ -1,4 +1,4 @@
-/** Structural types for the subset of the OSV API that depscan reads. */
+/** Structural types for the subset of the OSV API that the engine reads. */
 
 export interface OsvPackageRef {
   readonly name?: string;

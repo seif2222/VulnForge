@@ -30,7 +30,7 @@ export interface AnalyzeOptions {
   readonly offline?: boolean;
   /** `--ignore <id>` rules, repeatable. */
   readonly ignoreIds?: readonly string[];
-  /** Ignore file path; defaults to `<projectDir>/.depscanignore` when it exists. */
+  /** Ignore file path; defaults to `<projectDir>/.vulnforgeignore` when it exists. */
   readonly ignoreFile?: string;
   /** Write the validated report here, atomically. No write when omitted. */
   readonly outPath?: string;
@@ -146,7 +146,7 @@ function parseProject(projectDir: string, ecosystem: Ecosystem): ParsedProject {
 function loadIgnoreRules(options: AnalyzeOptions, today: string): readonly IgnoreRule[] {
   const rules: IgnoreRule[] = [...rulesFromFlags(options.ignoreIds ?? [])];
 
-  const ignoreFile = options.ignoreFile ?? join(options.projectDir, '.depscanignore');
+  const ignoreFile = options.ignoreFile ?? join(options.projectDir, '.vulnforgeignore');
   if (existsSync(ignoreFile)) {
     try {
       rules.push(...parseIgnoreFile(readFileSync(ignoreFile, 'utf8')));

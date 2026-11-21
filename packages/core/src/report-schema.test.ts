@@ -101,7 +101,7 @@ describe('meta validation', () => {
     expect(issuesFor(report)[0]).toContain('/meta/warnings/0');
   });
 
-  it('requires the tool name to be depscan', () => {
+  it('requires the tool name to be vulnforge', () => {
     const report = draftReport('clean');
     setProp(report.meta.tool, 'name', 'other-scanner');
 

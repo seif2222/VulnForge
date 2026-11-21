@@ -1,7 +1,7 @@
 import type { IgnoredFinding, IgnoreSource, Vulnerability } from './types.js';
 
 /**
- * `.depscanignore` format — one rule per line:
+ * `.vulnforgeignore` format — one rule per line:
  *
  *   CVE-2021-23337
  *   GHSA-93q8-gq69-wqmw until=2027-01-01

@@ -71,7 +71,7 @@ const temporaryProjects: string[] = [];
  * fixtures cannot cover, such as a malformed manifest or a lockfile v2.
  */
 export function createTempProject(files: Readonly<Record<string, string>>): string {
-  const dir = mkdtempSync(join(tmpdir(), 'depscan-'));
+  const dir = mkdtempSync(join(tmpdir(), 'vulnforge-test-'));
   temporaryProjects.push(dir);
   for (const [name, contents] of Object.entries(files)) {
     const path = join(dir, name);

@@ -106,7 +106,7 @@ describe('createFileCache', () => {
   });
 
   it('keeps the default cache directory under the user home', () => {
-    expect(defaultCacheDir()).toMatch(/depscan/u);
+    expect(defaultCacheDir()).toMatch(/vulnforge/u);
   });
 });
 
