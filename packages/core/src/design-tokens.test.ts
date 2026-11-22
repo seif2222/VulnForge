@@ -10,21 +10,26 @@ const GENERATED_CSS_PATH = fileURLToPath(
 const GENERATED_TUI_PATH = fileURLToPath(
   new URL('../../../packages/cli/src/colors.generated.ts', import.meta.url),
 );
+const GENERATED_WEBGL_PATH = fileURLToPath(
+  new URL('../../../packages/dashboard/src/tokens.generated.ts', import.meta.url),
+);
 const EMITTER_URL = new URL('../../../scripts/emit-design-tokens.mjs', import.meta.url);
 
-async function freshEmit(): Promise<{ css: string; tui: string }> {
+async function freshEmit(): Promise<{ css: string; tui: string; webgl: string }> {
   const emitter = (await import(EMITTER_URL.href)) as {
     emitCss: () => string;
     emitTui: () => string;
+    emitWebGl: () => string;
   };
-  return { css: emitter.emitCss(), tui: emitter.emitTui() };
+  return { css: emitter.emitCss(), tui: emitter.emitTui(), webgl: emitter.emitWebGl() };
 }
 
 describe('design tokens: freshness of generated files', () => {
-  it('the committed CSS and TUI color table equal fresh emitter output', async () => {
+  it('the committed CSS, WebGL and TUI color tables equal fresh emitter output', async () => {
     const fresh = await freshEmit();
     expect(readFileSync(GENERATED_CSS_PATH, 'utf8')).toBe(fresh.css);
     expect(readFileSync(GENERATED_TUI_PATH, 'utf8')).toBe(fresh.tui);
+    expect(readFileSync(GENERATED_WEBGL_PATH, 'utf8')).toBe(fresh.webgl);
   });
 
   it('a hand edit to a generated file is caught (proof by mutation)', async () => {
@@ -43,6 +48,16 @@ describe('design tokens: golden pins (literal values, no imports from the source
     expect(css).toContain('--vf-severity-medium: #e8c352;');
     expect(css).toContain('--vf-severity-low: #8fa3ad;');
     expect(css).toContain('--vf-success: #4ec9a6;');
+  });
+
+  it('pins the same ramp in the WebGL color table (canvas cannot read CSS variables)', () => {
+    const webgl = readFileSync(GENERATED_WEBGL_PATH, 'utf8');
+    expect(webgl).toContain("accent: '#f59e7b',");
+    expect(webgl).toContain("severityCritical: '#ff6b6b',");
+    expect(webgl).toContain("severityHigh: '#e8743b',");
+    expect(webgl).toContain("severityMedium: '#e8c352',");
+    expect(webgl).toContain("severityLow: '#8fa3ad',");
+    expect(webgl).toContain("success: '#4ec9a6',");
   });
 
   it('pins the TUI severity SGR fallbacks (xterm-256 and 16-color)', () => {
@@ -65,6 +80,9 @@ describe('design tokens: golden pins (literal values, no imports from the source
       'GENERATED from packages/core/src/design-tokens.ts — do not edit by hand',
     );
     expect(readFileSync(GENERATED_TUI_PATH, 'utf8')).toContain(
+      'GENERATED from packages/core/src/design-tokens.ts — do not edit by hand',
+    );
+    expect(readFileSync(GENERATED_WEBGL_PATH, 'utf8')).toContain(
       'GENERATED from packages/core/src/design-tokens.ts — do not edit by hand',
     );
   });

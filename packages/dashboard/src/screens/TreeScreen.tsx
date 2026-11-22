@@ -1,13 +1,19 @@
-import { useMemo, useState } from 'react';
+import { Suspense, lazy, useMemo, useState } from 'react';
 
 import type { PackageTreeNode } from '../lib/core.js';
 import { buildDependencyGraph, buildTree } from '../lib/core.js';
 import type { ScanSession } from '../lib/useScan.js';
+import { isWebGLAvailable, usePrefersReducedMotion } from '../three/capabilities.js';
+
+const GraphSceneLazy = lazy(() =>
+  import('../three/GraphScene.js').then((module) => ({ default: module.GraphScene })),
+);
 
 /**
  * Dependency Tree: the real graph from the report - fold/expand, search, and a
- * vulnerable-path filter. The interactive 3D graph lives in the scene panel and
- * falls back to this accessible list on WebGL-less or reduced-motion setups.
+ * vulnerable-path filter. The interactive 3D graph renders beside it when
+ * WebGL and motion are available; the accessible list always carries the same
+ * data and is the documented fallback.
  */
 export function TreeScreen(props: { readonly session: ScanSession }) {
   const { report } = props.session;
@@ -138,11 +144,37 @@ export function TreeScreen(props: { readonly session: ScanSession }) {
       </section>
       <section className="panel">
         <h2>3d graph</h2>
-        <p className="muted mono">
-          The interactive WebGL graph renders here when WebGL is available; this accessible tree
-          always carries the same data. (Scene component lands with the 3D slice.)
-        </p>
+        <GraphPanel graph={graph} report={report} pathIds={vulnerableOnly ? vulnerableIds : null} />
       </section>
     </div>
+  );
+}
+
+/** The 3D graph behind its capability gates; the 2D tree is the fallback. */
+function GraphPanel(props: {
+  readonly graph: NonNullable<ReturnType<typeof buildDependencyGraph>>;
+  readonly report: NonNullable<ScanSession['report']>;
+  readonly pathIds: ReadonlySet<string> | null;
+}) {
+  const reducedMotion = usePrefersReducedMotion();
+  if (!isWebGLAvailable()) {
+    return (
+      <p className="muted mono">
+        WebGL is not available in this browser — the tree on the left carries the same data.
+      </p>
+    );
+  }
+  if (reducedMotion) {
+    return (
+      <p className="muted mono">
+        Reduced motion is on — the interactive graph is paused; the tree on the left carries the
+        same data.
+      </p>
+    );
+  }
+  return (
+    <Suspense fallback={<p className="muted mono">loading the 3d graph…</p>}>
+      <GraphSceneLazy graph={props.graph} report={props.report} pathIds={props.pathIds} />
+    </Suspense>
   );
 }

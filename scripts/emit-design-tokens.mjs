@@ -2,6 +2,7 @@
 /**
  * Emitter: turns packages/core/src/design-tokens.ts (built to dist) into
  *   - packages/dashboard/src/design-tokens.generated.css
+ *   - packages/dashboard/src/tokens.generated.ts
  *   - packages/cli/src/colors.generated.ts
  * Both outputs begin with "GENERATED from <source> — do not edit by hand" and
  * are committed; a freshness test proves they match this emitter's output.
@@ -158,13 +159,40 @@ export function emitTui() {
   ].join('\n');
 }
 
+/**
+ * Hex constants for WebGL materials. CSS custom properties cannot reach a
+ * canvas context, so three.js scenes read the same tokens from this module.
+ */
+export function emitWebGl() {
+  const flat = flatTokens();
+  const entries = Object.entries(flat).map(([name, hex]) => {
+    const camel = name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+    return `  ${camel}: '${hex}',`;
+  });
+  return [
+    `// ${HEADER}`,
+    '/** Hex colors for WebGL materials (CSS custom properties cannot reach a canvas). */',
+    'export const WEBGL_COLORS = {',
+    ...entries,
+    '} as const;',
+    '',
+    'export const WEBGL_MOTION = {',
+    `  fastMs: ${t.motion.fastMs},`,
+    `  baseMs: ${t.motion.baseMs},`,
+    `  slowMs: ${t.motion.slowMs},`,
+    '} as const;',
+    '',
+  ].join('\n');
+}
+
 export const OUTPUTS = [
   'packages/dashboard/src/design-tokens.generated.css',
+  'packages/dashboard/src/tokens.generated.ts',
   'packages/cli/src/colors.generated.ts',
 ];
 
 if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const outputs = [OUTPUTS[0], emitCss(), OUTPUTS[1], emitTui()];
+  const outputs = [OUTPUTS[0], emitCss(), OUTPUTS[1], emitWebGl(), OUTPUTS[2], emitTui()];
   for (let i = 0; i < outputs.length; i += 2) {
     const path = join(ROOT, outputs[i]);
     mkdirSync(dirname(path), { recursive: true });

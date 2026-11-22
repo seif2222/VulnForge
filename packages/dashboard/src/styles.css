@@ -755,3 +755,55 @@ input.text:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- WebGL scenes ---- */
+.scene-container {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--vf-border-subtle);
+  border-radius: var(--vf-radius-md);
+  background: var(--vf-bg-base);
+}
+
+.scene-graph {
+  height: 380px;
+}
+
+.scene-forge {
+  height: 260px;
+  border: none;
+  background: transparent;
+}
+
+.scene-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.scene-hover {
+  margin: var(--vf-space-sm) 0 0;
+  padding: var(--vf-space-xs) var(--vf-space-sm);
+  border: 1px solid var(--vf-border-subtle);
+  border-radius: var(--vf-radius-sm);
+  background: var(--vf-bg-overlay);
+  font-size: 12px;
+}
+
+.scene-hint {
+  margin: var(--vf-space-sm) 0 0;
+  font-size: 11px;
+}
+
+.scene-detail {
+  margin-top: var(--vf-space-md);
+  border-top: 1px solid var(--vf-border-subtle);
+  padding-top: var(--vf-space-md);
+}
+
+@media (max-width: 900px) {
+  .scene-graph {
+    height: 300px;
+  }
+}

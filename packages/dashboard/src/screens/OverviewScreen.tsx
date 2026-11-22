@@ -1,4 +1,4 @@
-import { Forge2D } from '../components/Forge2D.js';
+import { ForgeVisual } from '../components/ForgeVisual.js';
 import { agentStateFor, buildOverviewModel } from '../lib/core.js';
 import type { ScanSession } from '../lib/useScan.js';
 
@@ -50,7 +50,7 @@ export function OverviewScreen(props: { readonly session: ScanSession }) {
 
       <section className="panel panel-forge">
         <h2>agent</h2>
-        <Forge2D
+        <ForgeVisual
           state={agentState}
           detectedSeverity={session.ui.state === 'detected' ? session.ui.detectedSeverity : null}
         />

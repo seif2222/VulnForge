@@ -13,6 +13,7 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const ALLOWED_FILES = new Set([
   'packages/core/src/design-tokens.ts',
   'packages/dashboard/src/design-tokens.generated.css',
+  'packages/dashboard/src/tokens.generated.ts',
   'packages/cli/src/colors.generated.ts',
 ]);
 

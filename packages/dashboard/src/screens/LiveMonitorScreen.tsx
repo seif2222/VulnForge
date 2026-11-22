@@ -1,4 +1,4 @@
-import { Forge2D } from '../components/Forge2D.js';
+import { ForgeVisual } from '../components/ForgeVisual.js';
 import { agentStateFor } from '../lib/core.js';
 import type { ScanSession } from '../lib/useScan.js';
 
@@ -43,7 +43,7 @@ export function LiveMonitorScreen(props: { readonly session: ScanSession }) {
       </section>
       <section className="panel panel-forge">
         <h2>agent sensor</h2>
-        <Forge2D
+        <ForgeVisual
           state={agentState}
           size={200}
           detectedSeverity={ui.state === 'detected' ? ui.detectedSeverity : null}
