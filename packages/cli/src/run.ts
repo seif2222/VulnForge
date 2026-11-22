@@ -1,3 +1,4 @@
+import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 
 import {
@@ -263,6 +264,7 @@ async function runDashboard(flags: DashboardFlags, io: CliIo): Promise<number> {
     port: flags.port ?? undefined,
     reportPath: flags.reportPath ?? undefined,
     assetsRoot,
+    historyPath: resolve(homedir(), '.vulnforge', 'dashboard-history.json'),
     toolVersion: io.version,
     aiAvailable: forgeConfig !== null,
     // When a provider is configured, scans launched from the dashboard can ask

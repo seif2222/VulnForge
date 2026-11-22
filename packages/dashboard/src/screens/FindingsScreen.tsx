@@ -1,3 +1,4 @@
+import { SeverityDonut } from '../components/SeverityDonut.js';
 import { useMemo, useState } from 'react';
 
 import type { FindingRow, Severity } from '../lib/core.js';
@@ -55,91 +56,99 @@ export function FindingsScreen(props: { readonly session: ScanSession }) {
       : (report.suggestions.find((entry) => entry.findingKey === selectedRow.findingKey) ?? null);
 
   return (
-    <div className="grid-findings">
-      <section className="panel">
-        <h2>findings explorer</h2>
-        <div className="findings-controls">
-          <select
-            className="text select"
-            value={severity}
-            onChange={(event) => setSeverity(event.target.value as Severity | 'all')}
-            aria-label="severity filter">
-            <option value="all">all severities ({model.rows.length})</option>
-            {SEVERITIES.map((level) => (
-              <option key={level} value={level}>
-                {level} ({model.counts[level] ?? 0})
-              </option>
-            ))}
-          </select>
-          <input
-            className="text"
-            placeholder="search id, CVE or package"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            aria-label="search findings"
-          />
-          <select
-            className="text select"
-            value={sortKey}
-            onChange={(event) => setSortKey(event.target.value as SortKey)}
-            aria-label="sort by">
-            <option value="severity">sort: severity</option>
-            <option value="score">sort: priority score</option>
-            <option value="package">sort: package</option>
-            <option value="id">sort: id</option>
-          </select>
-        </div>
-        {rows.length === 0 ? (
-          <p className="muted mono">no findings match</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>severity</th>
-                <th>id</th>
-                <th>package</th>
-                <th>installed</th>
-                <th>fix</th>
-                <th>score</th>
-                <th>flags</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.findingKey}
-                  className={row.findingKey === selected ? 'row-selected' : ''}
-                  onClick={() => setSelected(row.findingKey)}>
-                  <td>
-                    <span className={`badge ${row.severity}`}>{row.severity}</span>
-                  </td>
-                  <td>{row.cve ?? row.id}</td>
-                  <td>{row.packageName}</td>
-                  <td>{row.installedVersion}</td>
-                  <td>{row.fixedVersion ?? '—'}</td>
-                  <td>{row.priorityScore}</td>
-                  <td className="muted">
-                    {row.flags.isDirect ? 'direct' : 'transitive'}
-                    {row.ignored ? ' · ignored' : ''}
-                  </td>
-                </tr>
+    <div className="results-page">
+      <SeverityDonut report={report} />
+      {props.session.historyWarning && (
+        <p role="alert" className="warn-list">
+          {props.session.historyWarning}
+        </p>
+      )}
+      <div className="grid-findings">
+        <section className="panel">
+          <h2>findings explorer</h2>
+          <div className="findings-controls">
+            <select
+              className="text select"
+              value={severity}
+              onChange={(event) => setSeverity(event.target.value as Severity | 'all')}
+              aria-label="severity filter">
+              <option value="all">all severities ({model.rows.length})</option>
+              {SEVERITIES.map((level) => (
+                <option key={level} value={level}>
+                  {level} ({model.counts[level] ?? 0})
+                </option>
               ))}
-            </tbody>
-          </table>
-        )}
-        {model.ignoredCount > 0 && (
-          <p className="muted mono">{model.ignoredCount} finding(s) suppressed by ignore rules</p>
-        )}
-      </section>
+            </select>
+            <input
+              className="text"
+              placeholder="search id, CVE or package"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              aria-label="search findings"
+            />
+            <select
+              className="text select"
+              value={sortKey}
+              onChange={(event) => setSortKey(event.target.value as SortKey)}
+              aria-label="sort by">
+              <option value="severity">sort: severity</option>
+              <option value="score">sort: priority score</option>
+              <option value="package">sort: package</option>
+              <option value="id">sort: id</option>
+            </select>
+          </div>
+          {rows.length === 0 ? (
+            <p className="muted mono">no findings match</p>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>severity</th>
+                  <th>id</th>
+                  <th>package</th>
+                  <th>installed</th>
+                  <th>fix</th>
+                  <th>score</th>
+                  <th>flags</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    key={row.findingKey}
+                    className={row.findingKey === selected ? 'row-selected' : ''}
+                    onClick={() => setSelected(row.findingKey)}>
+                    <td>
+                      <span className={`badge ${row.severity}`}>{row.severity}</span>
+                    </td>
+                    <td>{row.cve ?? row.id}</td>
+                    <td>{row.packageName}</td>
+                    <td>{row.installedVersion}</td>
+                    <td>{row.fixedVersion ?? '—'}</td>
+                    <td>{row.priorityScore}</td>
+                    <td className="muted">
+                      {row.flags.isDirect ? 'direct' : 'transitive'}
+                      {row.ignored ? ' · ignored' : ''}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {model.ignoredCount > 0 && (
+            <p className="muted mono">{model.ignoredCount} finding(s) suppressed by ignore rules</p>
+          )}
+        </section>
 
-      <section className="panel">
-        <h2>finding details</h2>
-        {selectedRow === null ? (
-          <p className="muted">select a finding</p>
-        ) : (
-          <FindingDetails session={props.session} row={selectedRow} suggestion={suggestion} />
-        )}
-      </section>
+        <section className="panel">
+          <h2>finding details</h2>
+          {selectedRow === null ? (
+            <p className="muted">select a finding</p>
+          ) : (
+            <FindingDetails session={props.session} row={selectedRow} suggestion={suggestion} />
+          )}
+        </section>
+      </div>
     </div>
   );
 }

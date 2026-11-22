@@ -1411,3 +1411,55 @@ input.text:focus-visible {
     animation: none;
   }
 }
+
+/* Final scan summary. SVG geometry is data-driven; colors stay in design tokens. */
+.results-page {
+  display: grid;
+  gap: 18px;
+}
+.severity-donut-layout {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+.severity-donut {
+  width: 210px;
+  height: 210px;
+  flex: 0 0 210px;
+}
+.donut-track {
+  fill: none;
+  stroke: var(--vf-border-strong);
+  stroke-width: 17;
+}
+.donut-segment.critical {
+  stroke: var(--vf-severity-critical);
+}
+.donut-segment.high {
+  stroke: var(--vf-severity-high);
+}
+.donut-segment.medium {
+  stroke: var(--vf-severity-medium);
+}
+.donut-segment.low {
+  stroke: var(--vf-severity-low);
+}
+.donut-total {
+  fill: currentColor;
+  font: 700 30px monospace;
+}
+.donut-caption {
+  fill: currentColor;
+  font: 11px monospace;
+}
+.severity-legend {
+  min-width: 280px;
+}
+.severity-legend-row {
+  display: grid;
+  grid-template-columns: 100px 50px 80px;
+  align-items: center;
+  gap: 18px;
+  margin: 13px 0;
+}

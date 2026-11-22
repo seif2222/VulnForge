@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 
 import { Intro } from './components/Intro.js';
 import { useScan } from './lib/useScan.js';
@@ -112,6 +112,18 @@ export function App() {
   const [entered, setEntered] = useState(false);
   const [tab, setTab] = useState<TabId>('overview');
   const session = useScan();
+  useEffect(() => {
+    if (session.ui.state === 'completed' && session.ui.target !== null) {
+      setTab('findings');
+      return;
+    }
+    if (session.ui.state !== 'detected') return;
+    const timer = setTimeout(() => {
+      session.acknowledge();
+      setTab('findings');
+    }, 1100);
+    return () => clearTimeout(timer);
+  }, [session.ui.state, session.acknowledge]);
 
   if (!entered) {
     return <Intro onStart={() => setEntered(true)} />;
@@ -168,7 +180,7 @@ export function App() {
         ) : tab === 'agent' ? (
           <AgentScreen session={session} />
         ) : tab === 'history' ? (
-          <HistoryScreen session={session} />
+          <HistoryScreen session={session} onOpen={() => setTab('findings')} />
         ) : tab === 'reports' ? (
           <ReportsScreen session={session} />
         ) : (

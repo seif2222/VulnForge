@@ -1,3 +1,4 @@
+import { createDashboardHistory } from './dashboard-history.js';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import {
   existsSync,
@@ -198,6 +199,7 @@ export interface DashboardServerOptions {
   readonly port?: number;
   /** Report shown at startup; validated once, here. */
   readonly reportPath?: string;
+  readonly historyPath?: string;
   /** Static bundle root; realpath containment is enforced against it. */
   readonly assetsRoot: string;
   /** Stamped into reports the scan route produces. */
@@ -245,6 +247,7 @@ export async function startDashboardServer(
     );
   }
 
+  const history = createDashboardHistory(options.historyPath);
   let startupReport: Report | null = null;
   if (options.reportPath !== undefined) {
     let parsed: unknown;
@@ -314,6 +317,11 @@ export async function startDashboardServer(
     const pathname = safePathname(rawUrl);
     if (pathname === null) {
       sendJson(res, 400, { error: 'bad-url' });
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/history') {
+      sendJson(res, 200, history.snapshot());
       return;
     }
 
@@ -506,6 +514,7 @@ export async function startDashboardServer(
             // Forge failure keeps the base report.
           }
         }
+        history.add(report);
         emit('state', { state: 'completed', runId: scan.runId });
         sendJson(res, 200, report);
         return;

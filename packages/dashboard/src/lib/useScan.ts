@@ -3,13 +3,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Report, ScanHistoryEntry, UiScanState } from './core.js';
 import { INITIAL_UI_STATE, historyEntryFromReport, transition } from './core.js';
 import type { ScanProgress, StructurePayload } from './api.js';
-import { fetchStartupReport, fetchStructure, launchScan, subscribeScanEvents } from './api.js';
+import {
+  fetchHistory,
+  fetchStartupReport,
+  fetchStructure,
+  launchScan,
+  subscribeScanEvents,
+} from './api.js';
 
 export interface ScanSession {
   readonly ui: UiScanState;
   readonly report: Report | null;
   readonly reportLoad: 'loading' | 'ready' | 'empty' | 'error';
   readonly history: readonly ScanHistoryEntry[];
+  readonly historyWarning: string | null;
+  readonly openHistory: (index: number) => void;
   /** Every package the engine queried, in real arrival order (from SSE progress). */
   readonly scannedPackages: readonly string[];
   /** The real file/folder structure of the scan target; null until fetched. */
@@ -42,6 +50,25 @@ export function useScan(): ScanSession {
   const [report, setReport] = useState<Report | null>(null);
   const [reportLoad, setReportLoad] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [history, setHistory] = useState<readonly ScanHistoryEntry[]>([]);
+  const [savedReports, setSavedReports] = useState<readonly Report[]>([]);
+  const [historyWarning, setHistoryWarning] = useState<string | null>(null);
+  const refreshHistory = useCallback(async () => {
+    try {
+      const saved = await fetchHistory();
+      setSavedReports(saved.reports);
+      setHistory(
+        saved.reports.map((r) => historyEntryFromReport(r, saved.path ?? 'server memory')),
+      );
+      setHistoryWarning(saved.warning);
+      return saved.reports;
+    } catch {
+      setHistoryWarning('Saved history could not be loaded. Current results are still available.');
+      return [];
+    }
+  }, []);
+  useEffect(() => {
+    void refreshHistory();
+  }, [refreshHistory]);
   const [scannedPackages, setScannedPackages] = useState<readonly string[]>([]);
   const [structure, setStructure] = useState<StructurePayload | null>(null);
   const [structureUnavailable, setStructureUnavailable] = useState(false);
@@ -56,12 +83,23 @@ export function useScan(): ScanSession {
           return;
         }
         if (loaded === null) {
-          setReportLoad('empty');
+          void fetchHistory()
+            .then((saved) => {
+              if (!alive) return;
+              const latest = saved.reports[0];
+              if (latest !== undefined) {
+                setReport(latest);
+                setReportLoad('ready');
+              } else setReportLoad('empty');
+            })
+            .catch(() => {
+              if (alive) setReportLoad('empty');
+            });
           return;
         }
         const loadedReport = loaded as Report;
         setReport(loadedReport);
-        setHistory([historyEntryFromReport(loadedReport, 'report.json (loaded at startup)')]);
+
         setReportLoad('ready');
       })
       .catch(() => {
@@ -85,9 +123,10 @@ export function useScan(): ScanSession {
           );
         } else if (event.state === 'cancelled') {
           setUi((current) => transition(current, { type: 'scan-cancelled' }).next);
-        } else if (event.state === 'completed') {
-          setUi((current) => transition(current, { type: 'scan-completed' }).next);
+        } else if (event.state === 'analyzing') {
+          setUi((current) => transition(current, { type: 'ai-started' }).next);
         }
+        // POST response owns completion: it carries the finished report.
         // 'scanning' and 'idle' snapshots need no transition: launch and reset own those.
       },
       (progress: ScanProgress) => {
@@ -111,65 +150,62 @@ export function useScan(): ScanSession {
     return unsubscribe;
   }, []);
 
-  const launch = useCallback((projectPath: string, aiExplanations: boolean) => {
-    const startedAt = new Date().toTimeString().slice(0, 8);
-    setScannedPackages([]);
-    setStructure(null);
-    setStructureUnavailable(false);
-    const seq = (structureSeq.current += 1);
-    fetchStructure(projectPath)
-      .then((listed) => {
-        if (seq !== structureSeq.current) {
-          return; // a newer launch owns the structure state
-        }
-        if (listed === null) {
-          setStructureUnavailable(true);
-        } else {
-          setStructure(listed);
-        }
-      })
-      .catch(() => {
-        if (seq === structureSeq.current) {
-          setStructureUnavailable(true);
-        }
-      });
-    setUi(
-      (current) =>
-        transition(current, { type: 'scan-started', target: projectPath, startedAt }).next,
-    );
-    const scan = launchScan(projectPath, aiExplanations);
-    cancelRef.current = scan.cancel;
-    scan.response
-      .then((result) => {
-        const finished = result as Report;
-        cancelRef.current = null;
-        setReport(finished);
-        setReportLoad('ready');
-        setHistory((entries) => [
-          {
-            source: 'session',
-            projectName: finished.meta.projectName,
-            generatedAt: finished.meta.generatedAt,
-            totalVulnerabilities: finished.stats.totalVulnerabilities,
-            bySeverity: finished.stats.bySeverity,
-            path: null,
-          },
-          ...entries,
-        ]);
-        const worst = worstSeverity(finished);
-        if (worst !== null) {
-          setUi((current) => transition(current, { type: 'detected', severity: worst }).next);
-        }
-      })
-      .catch((error: unknown) => {
-        cancelRef.current = null;
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return; // the SSE cancelled event owns the state
-        }
-        const message = error instanceof Error ? error.message : 'scan failed';
-        setUi((current) => transition(current, { type: 'scan-failed', message }).next);
-      });
-  }, []);
+  const launch = useCallback(
+    (projectPath: string, aiExplanations: boolean) => {
+      const startedAt = new Date().toTimeString().slice(0, 8);
+      setScannedPackages([]);
+      setStructure(null);
+      setStructureUnavailable(false);
+      const seq = (structureSeq.current += 1);
+      fetchStructure(projectPath)
+        .then((listed) => {
+          if (seq !== structureSeq.current) {
+            return; // a newer launch owns the structure state
+          }
+          if (listed === null) {
+            setStructureUnavailable(true);
+          } else {
+            setStructure(listed);
+          }
+        })
+        .catch(() => {
+          if (seq === structureSeq.current) {
+            setStructureUnavailable(true);
+          }
+        });
+      setUi(
+        (current) =>
+          transition(current, { type: 'scan-started', target: projectPath, startedAt }).next,
+      );
+      const scan = launchScan(projectPath, aiExplanations);
+      cancelRef.current = scan.cancel;
+      scan.response
+        .then((result) => {
+          const finished = result as Report;
+          cancelRef.current = null;
+          setReport(finished);
+          setReportLoad('ready');
+          void refreshHistory();
+          const worst = worstSeverity(finished);
+          setUi(
+            (current) =>
+              transition(
+                current,
+                worst === null ? { type: 'scan-completed' } : { type: 'detected', severity: worst },
+              ).next,
+          );
+        })
+        .catch((error: unknown) => {
+          cancelRef.current = null;
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            return; // the SSE cancelled event owns the state
+          }
+          const message = error instanceof Error ? error.message : 'scan failed';
+          setUi((current) => transition(current, { type: 'scan-failed', message }).next);
+        });
+    },
+    [refreshHistory],
+  );
 
   const cancel = useCallback(() => {
     cancelRef.current?.();
@@ -187,11 +223,23 @@ export function useScan(): ScanSession {
     setUi((current) => transition(current, { type: 'reset' }).next);
   }, []);
 
+  const openHistory = useCallback(
+    (index: number) => {
+      const saved = savedReports[index];
+      if (saved === undefined) return;
+      setReport(saved);
+      setReportLoad('ready');
+    },
+    [savedReports],
+  );
+
   return {
     ui,
     report,
     reportLoad,
     history,
+    historyWarning,
+    openHistory,
     scannedPackages,
     structure,
     structureUnavailable,

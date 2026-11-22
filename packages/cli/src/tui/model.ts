@@ -439,6 +439,7 @@ function describeEvent(event: ScanEvent): string | null {
       return `scan failed · ${event.message}`;
     case 'scan-cancelled':
       return 'scan cancelled';
+    case 'acknowledge':
     case 'reset':
       return null;
   }

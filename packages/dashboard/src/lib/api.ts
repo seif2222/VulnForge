@@ -1,3 +1,4 @@
+import type { Report } from './core.js';
 /** Typed client for the G4 dashboard server. Every field maps to a real endpoint. */
 
 export interface StatusPayload {
@@ -106,4 +107,14 @@ export async function fetchStructure(
     return null;
   }
   return (await res.json()) as StructurePayload;
+}
+
+export async function fetchHistory(): Promise<{
+  reports: Report[];
+  warning: string | null;
+  path: string | null;
+}> {
+  const res = await fetch('/api/history');
+  if (!res.ok) throw new Error('Saved history could not be loaded');
+  return (await res.json()) as { reports: Report[]; warning: string | null; path: string | null };
 }

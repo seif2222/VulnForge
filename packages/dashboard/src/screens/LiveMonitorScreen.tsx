@@ -185,7 +185,8 @@ function StructurePanel(props: { readonly session: ScanSession }) {
     const done = new Set<number>();
     if (replayIndex >= 0) {
       for (let i = 0; i < replayIndex; i += 1) {
-        done.add(visitOrder[i]);
+        const row = visitOrder[i];
+        if (row !== undefined) done.add(row);
       }
       return done;
     }
