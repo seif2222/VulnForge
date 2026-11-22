@@ -193,3 +193,15 @@ work begins.
   the vulnerable-npm fixture. The binding display rules (8 tabs, honest
   identifiers, "Querying OSV - N / M queries", no whole-scan percentage) are
   untouched.
+
+- **Revision 3 (2026-11-22):** owner direction: an intro (landing) screen
+  that opens first, before the dashboard tabs. Forge floats large in the
+  center of a pure black sky filled with subtle blue shooting-star light
+  streaks (canvas-rendered, capped at 5 concurrent, elegant not noisy), with
+  an entrance animation - Forge descends and un-blurs into place, then the
+  greeting "Hello, I'm Forge. Let's start." types itself in letter by letter
+  with a blinking caret. A quiet "click anywhere to enter the dashboard"
+  hint fades in last. All colors come from the design tokens at runtime;
+  prefers-reduced-motion freezes the sky to a few faint static streaks, shows
+  Forge instantly, and prints the greeting without typing. Prototype:
+  prototypes/dashboard-intro.html.

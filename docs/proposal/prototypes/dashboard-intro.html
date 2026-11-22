@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>VulnForge intro prototype - landing screen</title>
+    <link rel="stylesheet" href="../../../packages/dashboard/src/design-tokens.generated.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: #000;
+        color: var(--vf-text-primary);
+        font-family: var(--vf-font-sans);
+        overflow: hidden;
+      }
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        gap: var(--vf-space-sm);
+        align-items: baseline;
+        padding: 10px 16px;
+        background: var(--vf-bg-base);
+        border-bottom: 1px solid var(--vf-border-subtle);
+        z-index: 3;
+      }
+      header .brand {
+        font-family: var(--vf-font-mono);
+        font-weight: 700;
+      }
+      header .meta {
+        color: var(--vf-text-secondary);
+        font-size: 12px;
+      }
+      .sky {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+      }
+      .center {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+      }
+      .stage {
+        display: grid;
+        justify-items: center;
+        gap: var(--vf-space-lg);
+      }
+      .pad {
+        width: 170px;
+        height: 34px;
+        margin-top: -14px;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, var(--vf-accent-tint), transparent);
+      }
+
+      /* entrance animation (owner requirement): Forge descends in, then the greeting types */
+      .forgebot {
+        position: relative;
+        width: 130px;
+        height: 172px;
+        flex: none;
+        transform-origin: 50% 100%;
+        scale: 1.7;
+        opacity: 0;
+        animation: forge-enter 900ms var(--vf-motion-easing) 200ms both;
+      }
+      @keyframes forge-enter {
+        from {
+          opacity: 0;
+          translate: 0 -56px;
+          filter: blur(6px);
+        }
+        to {
+          opacity: 1;
+          translate: 0 0;
+          filter: blur(0);
+        }
+      }
+      .forgebot .antenna {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 4px;
+        height: 20px;
+        background: var(--vf-accent);
+        transform: translateX(-50%);
+      }
+      .forgebot .antenna::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: -12px;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        background: radial-gradient(circle at 35% 30%, var(--vf-accent-strong), var(--vf-accent));
+        box-shadow: 0 0 14px var(--vf-accent);
+      }
+      .forgebot .head {
+        position: absolute;
+        left: 0;
+        top: 30px;
+        width: 130px;
+        height: 90px;
+        border-radius: 46px;
+        background: radial-gradient(
+          circle at 35% 25%,
+          var(--vf-text-primary),
+          var(--vf-text-secondary) 130%
+        );
+        box-shadow:
+          0 0 34px var(--vf-accent-tint),
+          0 0 90px var(--vf-accent-tint),
+          inset 0 -8px 14px var(--vf-bg-overlay);
+      }
+      .forgebot .ear {
+        position: absolute;
+        top: 24px;
+        width: 16px;
+        height: 36px;
+        border-radius: 9px;
+        background: linear-gradient(var(--vf-accent-strong), var(--vf-accent));
+        box-shadow: 0 0 10px var(--vf-accent);
+      }
+      .forgebot .ear.left {
+        left: -12px;
+      }
+      .forgebot .ear.right {
+        right: -12px;
+      }
+      .forgebot .visor {
+        position: absolute;
+        left: 16px;
+        top: 14px;
+        width: 98px;
+        height: 60px;
+        border-radius: 30px;
+        background: var(--vf-bg-overlay);
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6);
+      }
+      .forgebot .eye {
+        width: 22px;
+        height: 36px;
+        border-radius: 5px;
+        background: repeating-linear-gradient(
+          var(--vf-accent-strong) 0 4px,
+          var(--vf-accent-on) 4px 8px
+        );
+        background-size: 100% 16px;
+      }
+      .forgebot .torso {
+        position: absolute;
+        left: 25px;
+        top: 128px;
+        width: 80px;
+        height: 42px;
+        border-radius: 22px;
+        background: radial-gradient(
+          circle at 40% 25%,
+          var(--vf-text-primary),
+          var(--vf-text-secondary) 140%
+        );
+        box-shadow: 0 0 16px var(--vf-accent-tint);
+      }
+      .forgebot .chest {
+        position: absolute;
+        left: 22px;
+        top: 10px;
+        width: 36px;
+        height: 22px;
+        border-radius: 9px;
+        background: var(--vf-bg-overlay);
+      }
+      .forgebot .chest::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 10px;
+        height: 10px;
+        transform: translate(-50%, -50%) rotate(45deg);
+        background: var(--vf-accent);
+        box-shadow: 0 0 8px var(--vf-accent);
+      }
+      @keyframes forge-float {
+        0%,
+        100% {
+          translate: 0 0;
+        }
+        50% {
+          translate: 0 -14px;
+        }
+      }
+      .forgebot.float {
+        animation:
+          forge-enter 900ms var(--vf-motion-easing) 200ms both,
+          forge-float 4.6s ease-in-out 1.2s infinite;
+      }
+
+      .greeting {
+        font-family: var(--vf-font-mono);
+        font-size: 26px;
+        min-height: 34px;
+        color: var(--vf-text-primary);
+        text-shadow: 0 0 18px var(--vf-accent-tint);
+        white-space: pre;
+      }
+      .greeting .caret {
+        display: inline-block;
+        width: 12px;
+        color: var(--vf-accent-strong);
+        animation: caret-blink 1s steps(1) infinite;
+      }
+      @keyframes caret-blink {
+        50% {
+          opacity: 0;
+        }
+      }
+      .hint {
+        color: var(--vf-text-disabled);
+        font-size: 13px;
+        opacity: 0;
+        animation: hint-in var(--vf-motion-slow) ease-out 3.2s both;
+      }
+      @keyframes hint-in {
+        to {
+          opacity: 1;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .forgebot,
+        .forgebot.float {
+          opacity: 1;
+          animation: none;
+        }
+        .greeting .caret,
+        .hint {
+          animation: none;
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="brand">VulnForge</span>
+      <span class="meta"
+        >prototype - intro screen mock (opens first, before the dashboard tabs)</span
+      >
+    </header>
+    <canvas class="sky" aria-hidden="true"></canvas>
+    <div class="center">
+      <div class="stage">
+        <div class="forgebot float" aria-label="Forge robot, greeting">
+          <div class="antenna"></div>
+          <div class="head">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <div class="visor"><span class="eye"></span><span class="eye"></span></div>
+          </div>
+          <div class="torso"><div class="chest"></div></div>
+        </div>
+        <div class="pad"></div>
+        <div class="greeting"><span id="greet"></span><span class="caret" id="caret">▍</span></div>
+        <div class="hint">click anywhere to enter the dashboard</div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        'use strict';
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var css = getComputedStyle(document.documentElement);
+        var accent = css.getPropertyValue('--vf-accent').trim();
+        var strong = css.getPropertyValue('--vf-accent-strong').trim();
+        function toRgb(hex) {
+          var m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+          return m
+            ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) }
+            : { r: 94, g: 200, b: 227 };
+        }
+        function tint(c, a) {
+          return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + a + ')';
+        }
+        var ACC = toRgb(accent);
+        var STR = toRgb(strong);
+
+        /* subtle shooting-star streaks on a pure black sky */
+        var canvas = document.querySelector('.sky');
+        var ctx = canvas.getContext('2d');
+        var meteors = [];
+        function resize() {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+        function spawn() {
+          if (meteors.length >= 5) return;
+          var dir = Math.random() < 0.5 ? 1 : -1;
+          meteors.push({
+            x: (0.1 + 0.8 * Math.random()) * canvas.width,
+            y: -20,
+            vx: dir * (1.1 + Math.random() * 0.9),
+            vy: 2.4 + Math.random() * 1.4,
+            len: 90 + Math.random() * 110,
+            life: 0,
+            max: 200 + Math.random() * 120,
+          });
+        }
+        function draw() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          for (var i = meteors.length - 1; i >= 0; i--) {
+            var m = meteors[i];
+            m.x += m.vx;
+            m.y += m.vy;
+            m.life++;
+            var fade =
+              m.life < 30
+                ? m.life / 30
+                : m.life > m.max - 40
+                  ? Math.max(0, (m.max - m.life) / 40)
+                  : 1;
+            var mag = Math.hypot(m.vx, m.vy);
+            var tx = m.x - (m.vx / mag) * m.len;
+            var ty = m.y - (m.vy / mag) * m.len;
+            var g = ctx.createLinearGradient(m.x, m.y, tx, ty);
+            g.addColorStop(0, tint(STR, 0.5 * fade));
+            g.addColorStop(0.25, tint(ACC, 0.22 * fade));
+            g.addColorStop(1, tint(ACC, 0));
+            ctx.strokeStyle = g;
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(m.x, m.y);
+            ctx.lineTo(tx, ty);
+            ctx.stroke();
+            if (m.life > m.max || m.y > canvas.height + m.len) meteors.splice(i, 1);
+          }
+        }
+        if (reduce) {
+          /* static, quiet sky: a few faint frozen streaks */
+          for (var s = 0; s < 7; s++) {
+            spawn();
+            meteors[s].x = Math.random() * canvas.width;
+            meteors[s].y = Math.random() * canvas.height;
+            meteors[s].life = 60;
+            meteors[s].max = 1e9;
+          }
+          draw();
+        } else {
+          spawn();
+          setInterval(spawn, 1100);
+          (function loop() {
+            draw();
+            requestAnimationFrame(loop);
+          })();
+        }
+
+        /* greeting typewriter after Forge lands */
+        var text = "Hello, I'm Forge. Let's start.";
+        var greet = document.getElementById('greet');
+        var caret = document.getElementById('caret');
+        if (reduce) {
+          greet.textContent = text;
+          caret.style.display = 'none';
+        } else {
+          var i = 0;
+          setTimeout(function tick() {
+            greet.textContent = text.slice(0, ++i);
+            if (i < text.length) setTimeout(tick, 42);
+          }, 1150);
+        }
+      })();
+    </script>
+  </body>
+</html>

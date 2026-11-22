@@ -128,6 +128,15 @@ dependency tree, hover lift, radar sweep in Live Monitor). All values remain
 tokens; all numbers remain fixture data; the spec's binding display rules are
 unchanged. TUI renderer and frames unchanged in this revision.
 
+## Revision 3 (2026-11-22, same gate)
+
+Owner direction: add an intro screen that opens before the dashboard. New
+prototype docs/proposal/prototypes/dashboard-intro.html: pure black sky with
+subtle token-colored shooting-star streaks (canvas), Forge floating large in
+the center, entrance animation (Forge descends in, greeting types in:
+"Hello, I'm Forge. Let's start."), click-to-enter hint. Reduced-motion
+fallbacks throughout. Screenshot evidence rendered from the real file.
+
 ## Gate
 
 Owner approval needed on: the Forge robot identity (his own reference, as rendered by the new
