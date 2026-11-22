@@ -8,6 +8,8 @@ import type { PackageEntry, UnresolvedRequirement } from './types.js';
 export const NPM_REGISTRY_ENDPOINT = 'https://registry.npmjs.org';
 export const REGISTRY_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 export const REGISTRY_TIMEOUT_MS = 10_000;
+/** Parallel registry lookups while resolving lockfile-less ranges. */
+export const REGISTRY_CONCURRENCY = 8;
 
 export const REGISTRY_ERROR_CODES = [
   'network-unavailable',
@@ -236,6 +238,7 @@ export async function resolveManifestRanges(
   unresolved: readonly UnresolvedRequirement[],
   registry: NpmRegistry,
   signal?: AbortSignal,
+  onProgress?: (progress: { done: number; total: number; package: string }) => void,
 ): Promise<RegistryResolution> {
   // devDependencies is the only section distinction worth preserving; best effort.
   const devNames = new Set<string>();
@@ -250,41 +253,73 @@ export async function resolveManifestRanges(
     // The manifest parsed fine earlier; a re-read failure just means isDev stays null.
   }
 
-  const resolved: PackageEntry[] = [];
-  const left: UnresolvedRequirement[] = [];
-  let unreachable = 0;
-  let noMatch = 0;
+  type Outcome =
+    | { readonly kind: 'resolved'; readonly entry: PackageEntry }
+    | { readonly kind: 'left'; readonly entry: UnresolvedRequirement }
+    | { readonly kind: 'no-match'; readonly entry: UnresolvedRequirement }
+    | { readonly kind: 'unreachable'; readonly entry: UnresolvedRequirement };
 
-  for (const entry of unresolved) {
-    if (signal?.aborted) {
-      throw new DOMException('The operation was aborted.', 'AbortError');
-    }
+  const outcomes: Outcome[] = new Array<Outcome>(unresolved.length);
+  const total = unresolved.length;
+  let finished = 0;
+  let cursor = 0;
+
+  async function resolveOne(entry: UnresolvedRequirement): Promise<Outcome> {
     if (!REGISTRY_RESOLVABLE.has(entry.reason)) {
-      left.push(entry);
-      continue;
+      return { kind: 'left', entry };
     }
     try {
       const metadata = await registry.metadata(entry.name);
       const version = pickRegistryVersion(metadata, entry.specifier);
       if (version === null) {
-        noMatch += 1;
-        left.push(entry);
-        continue;
+        return { kind: 'no-match', entry };
       }
-      resolved.push({
-        name: entry.name,
-        version,
-        isDirect: true,
-        depth: 0,
-        parents: [],
-        isDev: devNames.size === 0 ? null : devNames.has(entry.name),
-      });
+      return {
+        kind: 'resolved',
+        entry: {
+          name: entry.name,
+          version,
+          isDirect: true,
+          depth: 0,
+          parents: [],
+          isDev: devNames.size === 0 ? null : devNames.has(entry.name),
+        },
+      };
     } catch (error) {
       if (signal?.aborted) {
         throw error;
       }
-      unreachable += 1;
-      left.push(entry);
+      return { kind: 'unreachable', entry };
+    }
+  }
+
+  // Bounded concurrency: a slow registry no longer multiplies per-package timeouts.
+  async function worker(): Promise<void> {
+    while (cursor < total) {
+      if (signal?.aborted) {
+        throw new DOMException('The operation was aborted.', 'AbortError');
+      }
+      const index = cursor++;
+      const entry = unresolved[index] as UnresolvedRequirement;
+      outcomes[index] = await resolveOne(entry);
+      finished += 1;
+      onProgress?.({ done: finished, total, package: entry.name });
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(REGISTRY_CONCURRENCY, Math.max(total, 1)) }, () => worker()),
+  );
+
+  const resolved: PackageEntry[] = [];
+  const left: UnresolvedRequirement[] = [];
+  let unreachable = 0;
+  let noMatch = 0;
+  for (const outcome of outcomes) {
+    if (outcome.kind === 'resolved') resolved.push(outcome.entry);
+    else {
+      left.push(outcome.entry);
+      if (outcome.kind === 'unreachable') unreachable += 1;
+      if (outcome.kind === 'no-match') noMatch += 1;
     }
   }
 

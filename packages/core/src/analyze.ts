@@ -225,6 +225,7 @@ export async function analyzeProject(
           parsed.unresolved,
           registry,
           options.signal,
+          options.onProgress,
         );
         parsed = {
           ...parsed,

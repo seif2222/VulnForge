@@ -123,3 +123,41 @@ describe('pickRegistryVersion', () => {
     expect(pickRegistryVersion(meta, '^3.0.0')).toBeNull();
   });
 });
+
+describe('resolveManifestRanges concurrency', () => {
+  it('resolves in parallel, reports progress, and keeps manifest order', async () => {
+    const { resolveManifestRanges } = await import('./npm-registry.js');
+    const names = Array.from({ length: 16 }, (_, i) => `pkg-${String(i)}`);
+    const dirPath = mkdtempSync(join(tmpdir(), 'vf-conc-'));
+    let inFlight = 0;
+    let peak = 0;
+    const registry = {
+      async metadata(): Promise<{ versions: string[]; distTags: Record<string, string> }> {
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((r) => setTimeout(r, 20));
+        inFlight -= 1;
+        return { versions: ['1.0.0'], distTags: { latest: '1.0.0' } };
+      },
+    };
+    const seen: number[] = [];
+    const result = await resolveManifestRanges(
+      dirPath,
+      names.map((name, i) => ({
+        raw: name,
+        name,
+        specifier: '^1.0.0',
+        line: i + 1,
+        reason: 'not-pinned' as const,
+      })),
+      registry,
+      undefined,
+      (p) => seen.push(p.done),
+    );
+    rmSync(dirPath, { recursive: true, force: true });
+    expect(peak).toBeGreaterThan(1);
+    expect(peak).toBeLessThanOrEqual(8);
+    expect(seen).toHaveLength(16);
+    expect(result.packages.map((p) => p.name)).toEqual(names);
+  });
+});

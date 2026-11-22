@@ -494,6 +494,7 @@ export async function startDashboardServer(
         let report = result.report;
         if (aiExplanations && options.suggest !== undefined) {
           try {
+            emit('state', { state: 'analyzing', runId: scan.runId });
             const enriched = await options.suggest(report);
             // Only swap in the enriched report when it still validates; Forge
             // writes suggestions, never findings, and must never fail a scan.
