@@ -58,6 +58,7 @@ function runningModel(): TuiModel {
       exists: true,
       manifest: 'package-lock.json',
       ecosystem: 'npm',
+      lockfile: 'package-lock.json',
       ignoreFile: null,
     },
   }).model;
@@ -137,6 +138,7 @@ describe('tui golden frames (ANSI-stripped)', () => {
         exists: false,
         manifest: null,
         ecosystem: null,
+        lockfile: null,
         ignoreFile: null,
       },
     }).model;

@@ -51,12 +51,14 @@ function probeTarget(
   readonly exists: boolean;
   readonly manifest: string | null;
   readonly ecosystem: string | null;
+  readonly lockfile: string | null;
   readonly ignoreFile: string | null;
 } {
   const dir = resolve(cwd, target);
   const exists = existsSync(dir);
   let manifest: string | null = null;
   let ecosystem: string | null = null;
+  let lockfile: string | null = null;
   if (exists) {
     for (const candidate of MANIFESTS) {
       if (existsSync(join(dir, candidate.file))) {
@@ -66,9 +68,14 @@ function probeTarget(
       }
     }
   }
+  if (exists && existsSync(join(dir, 'package-lock.json'))) {
+    lockfile = 'package-lock.json';
+  } else if (exists && existsSync(join(dir, 'pnpm-lock.yaml'))) {
+    lockfile = 'pnpm-lock.yaml';
+  }
   const ignoreFile =
     exists && existsSync(join(dir, '.vulnforgeignore')) ? join(dir, '.vulnforgeignore') : null;
-  return { target: dir, exists, manifest, ecosystem, ignoreFile };
+  return { target: dir, exists, manifest, ecosystem, lockfile, ignoreFile };
 }
 
 function parseKeys(chunk: Buffer): TuiKey[] {

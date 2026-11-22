@@ -94,6 +94,7 @@ export function errorExitCode(error: AnalyzeError): number {
     case 'parse-error':
     case 'ignore-file-error':
       return EXIT_CODES.usage;
+    case 'nothing-resolved':
     case 'invalid-report':
       // The engine refused to certify "clean" over unresolved inputs.
       return EXIT_CODES.incomplete;

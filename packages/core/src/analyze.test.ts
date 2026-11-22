@@ -153,6 +153,33 @@ describe('analyzeProject pipeline', () => {
     }
   });
 
+  it('fails honestly with nothing-resolved when no requirement resolves (depscan-copy regression)', async () => {
+    // The owner's depscan-copy: no lockfile, every dependency a range. The old
+    // path died deep in report validation; now the engine names the failing fact.
+    const dir = tempDir();
+    writeFileSync(
+      join(dir, 'package.json'),
+      JSON.stringify({
+        name: 'all-ranges',
+        version: '1.0.0',
+        dependencies: { lodash: '^4.17.21', chalk: '*' },
+      }),
+    );
+
+    const result = await analyzeProject(
+      { projectDir: dir, toolVersion: '0.0.0-test' },
+      { cache: createMemoryCache(), clock: CLOCK },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    if ('error' in result) {
+      expect(result.error.code).toBe('nothing-resolved');
+      expect(result.error.message).toContain('all 2 requirement(s) are unresolved');
+      expect(result.error.message).toContain('package-lock.json');
+    }
+  });
+
   it('produces a valid report for scoped packages (depscan regression: scoped parents)', async () => {
     // The owner's real depscan scan failed validation: parents like
     // "@typescript-eslint/parser@8.0.0" did not match the old unscoped pattern.

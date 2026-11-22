@@ -444,6 +444,23 @@ function startScanLines(
       ),
     );
     lines.push(factLine(caps, 'ecosystem', pf.ecosystem !== null, pf.ecosystem ?? 'unknown'));
+    if (pf.manifest === 'package.json' && pf.lockfile === null) {
+      lines.push(
+        fg(
+          caps,
+          TUI_COLORS.severityMedium,
+          '  ! no package-lock.json: only exact pins resolve - ranges will be skipped (run npm install for a full scan)',
+        ),
+      );
+    } else if (pf.lockfile === 'pnpm-lock.yaml') {
+      lines.push(
+        fg(
+          caps,
+          TUI_COLORS.severityMedium,
+          '  ! pnpm-lock.yaml is not readable yet: run npm install --package-lock-only for a full scan',
+        ),
+      );
+    }
     lines.push(
       pf.ignoreFile === null
         ? dim(caps, '  ○ ignore file: none (optional)')

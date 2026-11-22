@@ -56,6 +56,7 @@ export const ANALYZE_ERROR_CODES = [
   'no-ecosystem',
   'parse-error',
   'ignore-file-error',
+  'nothing-resolved',
   'invalid-report',
   'write-failed',
 ] as const;
@@ -194,6 +195,21 @@ export async function analyzeProject(
 
     const ecosystem = options.ecosystem ?? detectEcosystem(options.projectDir);
     const parsed = parseProject(options.projectDir, ecosystem);
+
+    // Zero-resolved is an honest dead end, not a report: without one resolved
+    // package there is nothing to query and a report would only mislead. Name
+    // the failing fact and the fix instead of dying in report validation.
+    if (parsed.packages.length === 0 && parsed.unresolved.length > 0) {
+      const reasons = [...new Set(parsed.unresolved.map((entry) => entry.reason))].join(', ');
+      const hint =
+        ecosystem === 'npm'
+          ? 'without a package-lock.json only exactly pinned versions (1.2.3) resolve; run "npm install" to create a lockfile, then scan again'
+          : 'only exact == pins in requirements.txt resolve; pin the requirements or install a lock step, then scan again';
+      throw new AnalyzeError(
+        'nothing-resolved',
+        `no dependencies could be resolved from ${parsed.manifestPath}: all ${parsed.unresolved.length} requirement(s) are unresolved (${reasons}) - ${hint}`,
+      );
+    }
 
     throwIfAborted(options.signal);
 

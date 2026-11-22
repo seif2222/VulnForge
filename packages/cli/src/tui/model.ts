@@ -33,6 +33,8 @@ export interface PreflightFacts {
   readonly exists: boolean;
   readonly manifest: string | null;
   readonly ecosystem: string | null;
+  /** The npm lockfile when present; 'pnpm-lock.yaml' when only pnpm's exists. */
+  readonly lockfile: string | null;
   readonly ignoreFile: string | null;
 }
 

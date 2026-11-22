@@ -32,6 +32,7 @@ const preflightOk = {
     exists: true,
     manifest: 'package-lock.json',
     ecosystem: 'npm',
+    lockfile: 'package-lock.json',
     ignoreFile: null,
   },
 };
@@ -106,6 +107,7 @@ describe('tui model reducer', () => {
         exists: false,
         manifest: null,
         ecosystem: null,
+        lockfile: null,
         ignoreFile: null,
       },
     });
