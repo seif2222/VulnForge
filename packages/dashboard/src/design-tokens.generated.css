@@ -1,0 +1,40 @@
+/* GENERATED from packages/core/src/design-tokens.ts — do not edit by hand */
+:root {
+  --vf-bg-base: #0b0f14;
+  --vf-bg-raised: #11161d;
+  --vf-bg-overlay: #171e27;
+  --vf-border-subtle: #212b36;
+  --vf-border-strong: #32404f;
+  --vf-text-primary: #e6edf3;
+  --vf-text-secondary: #9aa7b4;
+  --vf-text-disabled: #5b6773;
+  --vf-text-inverse: #0b0f14;
+  --vf-accent: #5ec8e3;
+  --vf-accent-strong: #8fdcf0;
+  --vf-accent-on: #06222c;
+  --vf-accent-tint: #123240;
+  --vf-severity-critical: #ff6b6b;
+  --vf-severity-high: #f79756;
+  --vf-severity-medium: #e8c352;
+  --vf-severity-low: #8b98a9;
+  --vf-severity-critical-tint: #3d1a1e;
+  --vf-severity-high-tint: #3a2517;
+  --vf-severity-medium-tint: #37301a;
+  --vf-severity-low-tint: #232a33;
+  --vf-success: #4ec9a6;
+  --vf-danger: #ff6b6b;
+  --vf-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --vf-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --vf-space-xs: 4px;
+  --vf-space-sm: 8px;
+  --vf-space-md: 16px;
+  --vf-space-lg: 24px;
+  --vf-space-xl: 32px;
+  --vf-radius-sm: 4px;
+  --vf-radius-md: 8px;
+  --vf-radius-lg: 12px;
+  --vf-motion-fast: 120ms;
+  --vf-motion-base: 200ms;
+  --vf-motion-slow: 360ms;
+  --vf-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+}

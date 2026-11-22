@@ -2,4 +2,5 @@ node_modules/
 dist/
 coverage/
 pnpm-lock.yaml
-*.tsbuildinfo
+*.tsbuildinfopackages/dashboard/src/design-tokens.generated.css
+packages/cli/src/colors.generated.ts

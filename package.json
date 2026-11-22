@@ -19,7 +19,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "pnpm -r run clean",
-    "verify": "pnpm run check-encoding && pnpm run format:check && pnpm run build && pnpm run lint && pnpm run test"
+    "verify": "pnpm run check-encoding && pnpm run format:check && pnpm run build && pnpm run lint && pnpm run hex-audit && pnpm run test",
+    "emit-tokens": "node scripts/emit-design-tokens.mjs",
+    "hex-audit": "node scripts/hex-audit.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

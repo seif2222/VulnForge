@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>VulnForge dashboard prototype - Live Monitor</title>
+    <link rel="stylesheet" href="../../../packages/dashboard/src/design-tokens.generated.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--vf-bg-base);
+        color: var(--vf-text-primary);
+        font-family: var(--vf-font-sans);
+        margin: 0;
+      }
+      header {
+        display: flex;
+        align-items: baseline;
+        gap: var(--vf-space-sm);
+        padding: var(--vf-space-md) var(--vf-space-lg);
+        border-bottom: 1px solid var(--vf-border-subtle);
+      }
+      header .brand {
+        font-family: var(--vf-font-mono);
+        font-weight: 700;
+      }
+      header .meta {
+        color: var(--vf-text-secondary);
+        font-size: 12px;
+      }
+      main {
+        padding: var(--vf-space-lg);
+        display: grid;
+        gap: var(--vf-space-md);
+        grid-template-columns: 2fr 1fr;
+        max-width: 1100px;
+      }
+      .card {
+        background: var(--vf-bg-raised);
+        border: 1px solid var(--vf-border-subtle);
+        border-radius: 8px;
+        padding: var(--vf-space-md);
+      }
+      .card h3 {
+        margin: 0 0 var(--vf-space-sm);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--vf-text-secondary);
+      }
+      .monitor-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .runid {
+        font-family: var(--vf-font-mono);
+        font-size: 12px;
+        color: var(--vf-text-secondary);
+      }
+      .progress {
+        font-family: var(--vf-font-mono);
+        font-size: 14px;
+        color: var(--vf-accent-strong);
+        margin: var(--vf-space-sm) 0;
+      }
+      .nodes {
+        display: flex;
+        gap: var(--vf-space-lg);
+        margin: var(--vf-space-md) 0;
+        font-family: var(--vf-font-mono);
+        font-size: 13px;
+        flex-wrap: wrap;
+      }
+      .node {
+        display: flex;
+        align-items: center;
+        gap: var(--vf-space-xs);
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 1px solid var(--vf-border-strong);
+      }
+      .node.lit .dot {
+        background: var(--vf-accent);
+        border-color: var(--vf-accent);
+        box-shadow: 0 0 8px var(--vf-accent-tint);
+      }
+      .node.lit {
+        color: var(--vf-text-primary);
+      }
+      .node.dim {
+        color: var(--vf-text-disabled);
+      }
+      .log {
+        font-family: var(--vf-font-mono);
+        font-size: 12px;
+        line-height: 1.7;
+        color: var(--vf-text-secondary);
+      }
+      .log .t {
+        color: var(--vf-text-disabled);
+        margin-right: var(--vf-space-sm);
+      }
+      .forge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--vf-space-sm);
+      }
+      .forge .lens {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 35% 30%,
+          var(--vf-accent-strong),
+          var(--vf-accent) 55%,
+          var(--vf-accent-tint)
+        );
+        position: relative;
+        animation: breathe 3.6s ease-in-out infinite;
+      }
+      .forge .lens::after {
+        content: '';
+        position: absolute;
+        inset: -12px -22px;
+        border: 2px solid var(--vf-accent);
+        border-radius: 50%;
+        transform: scaleY(0.42);
+        animation: ringspin var(--vf-motion-slow, 360ms) linear infinite;
+      }
+      .forge .state {
+        font-family: var(--vf-font-mono);
+        color: var(--vf-accent-strong);
+      }
+      @keyframes breathe {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.03);
+        }
+      }
+      @keyframes ringspin {
+        from {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.55;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .forge .lens,
+        .forge .lens::after {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="brand">VulnForge</span>
+      <span class="meta">Live Monitor - in-scan view, opens automatically (not a tab)</span>
+    </header>
+    <main>
+      <section class="card">
+        <div class="monitor-head">
+          <h3>Live Monitor</h3>
+          <span class="runid"
+            >started 02:14:07 &middot; run id from server (placeholder text, no invented id)</span
+          >
+        </div>
+        <div class="progress">Querying OSV &mdash; 2 / 3 queries</div>
+        <div class="nodes">
+          <span class="node lit"><span class="dot"></span>lodash 4.17.20</span>
+          <span class="node lit"><span class="dot"></span>minimist 1.2.5</span>
+          <span class="node dim"><span class="dot"></span>qs 5.2.0</span>
+        </div>
+        <h3>Scan event log (illustrative layout; times are mock)</h3>
+        <div class="log">
+          <div>
+            <span class="t">02:14:07</span>scan started &middot; fixture vulnerable-npm (3 direct
+            dependencies)
+          </div>
+          <div>
+            <span class="t">02:14:08</span>OSV query done &middot; lodash@4.17.20 &middot; 5
+            advisories
+          </div>
+          <div>
+            <span class="t">02:14:08</span>OSV query done &middot; minimist@1.2.5 &middot; 1
+            advisory
+          </div>
+          <div><span class="t">02:14:09</span>querying &middot; qs@5.2.0 ...</div>
+        </div>
+      </section>
+      <section class="card forge">
+        <div class="lens" aria-label="Forge, scanning"></div>
+        <div class="state">Forge &middot; SCANNING</div>
+      </section>
+    </main>
+  </body>
+</html>
