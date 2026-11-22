@@ -117,13 +117,14 @@ function buildForgeScene(handle: ThreeSceneHandle, refs: ForgeRefs): SceneInstan
   // Head: glossy ice-white shell (sphere squashed to the 2D proportions).
   const headShell = add(head, new SphereGeometry(34, 48, 32), shell, 0, 0, 0);
   headShell.scale.set(1, 0.76, 0.82);
-  // Visor: dark band across the face.
-  add(head, new BoxGeometry(52, 24, 8), visorMat, 0, 0, 23);
-  // Striped eyes: two stripes per eye, emissive accent.
-  add(head, new BoxGeometry(10, 2.6, 1.5), eyeMat, -11, 3.7, 27.4);
-  add(head, new BoxGeometry(10, 2.6, 1.5), eyeMat, -11, -1.8, 27.4);
-  add(head, new BoxGeometry(10, 2.6, 1.5), eyeMat, 11, 3.7, 27.4);
-  add(head, new BoxGeometry(10, 2.6, 1.5), eyeMat, 11, -1.8, 27.4);
+  // Visor: dark band across the face. Its front face must clear the head
+  // sphere's z extent (27.9) or the shell bulges through the middle.
+  add(head, new BoxGeometry(52, 24, 8), visorMat, 0, 0, 25.5);
+  // Striped eyes: two stripes per eye, emissive accent, just off the visor.
+  add(head, new BoxGeometry(10, 2.6, 1.5), eyeMat, -11, 3.7, 30.2);
+  add(head, new BoxGeometry(10, 2.6, 1.5), eyeMat, -11, -1.8, 30.2);
+  add(head, new BoxGeometry(10, 2.6, 1.5), eyeMat, 11, 3.7, 30.2);
+  add(head, new BoxGeometry(10, 2.6, 1.5), eyeMat, 11, -1.8, 30.2);
   // Ear discs.
   const earL = add(head, new CylinderGeometry(4, 4, 8, 24), shellDim, -38, -9, 0);
   earL.rotation.z = Math.PI / 2;

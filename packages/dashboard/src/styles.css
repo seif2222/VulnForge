@@ -263,19 +263,19 @@ body {
 }
 
 .dist-fill.critical {
-  background: var(--vf-severity-critical);
+  fill: var(--vf-severity-critical);
 }
 
 .dist-fill.high {
-  background: var(--vf-severity-high);
+  fill: var(--vf-severity-high);
 }
 
 .dist-fill.medium {
-  background: var(--vf-severity-medium);
+  fill: var(--vf-severity-medium);
 }
 
 .dist-fill.low {
-  background: var(--vf-severity-low);
+  fill: var(--vf-severity-low);
 }
 
 .table {
