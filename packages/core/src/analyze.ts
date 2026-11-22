@@ -169,7 +169,7 @@ function loadIgnoreRules(options: AnalyzeOptions, today: string): readonly Ignor
  * The temp file is never left behind by this function; a crash between write and
  * rename may leave one, which the next run's caller may remove.
  */
-function writeReportAtomic(outPath: string, report: Report, pid: number): void {
+export function writeReportAtomic(outPath: string, report: Report, pid: number): void {
   const temporary = `${outPath}.tmp-${pid}`;
   try {
     writeFileSync(temporary, `${JSON.stringify(report, null, 2)}\n`, 'utf8');

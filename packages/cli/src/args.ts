@@ -15,6 +15,9 @@ export interface AnalyzeFlags {
   readonly allowIncomplete: boolean;
   readonly quiet: boolean;
   readonly noColor: boolean;
+  /** Opt-in Forge steps. Never on by default. */
+  readonly explain: boolean;
+  readonly suggest: boolean;
 }
 
 export type ParsedArgs =
@@ -37,6 +40,8 @@ const VALUE_FLAGS = [
 
 const BOOLEAN_FLAGS = [
   '--offline',
+  '--explain',
+  '--suggest',
   '--fail-on-unresolved',
   '--allow-incomplete',
   '--quiet',
@@ -80,6 +85,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   let allowIncomplete = false;
   let quiet = false;
   let noColor = false;
+  let explain = false;
+  let suggest = false;
 
   // Support both `--flag value` and `--flag=value`.
   const expanded: string[] = [];
@@ -157,6 +164,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
         case '--no-color':
           noColor = true;
           break;
+        case '--explain':
+          explain = true;
+          break;
+        case '--suggest':
+          suggest = true;
+          break;
       }
       continue;
     }
@@ -188,6 +201,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       allowIncomplete,
       quiet,
       noColor,
+      explain,
+      suggest,
     },
   };
 }

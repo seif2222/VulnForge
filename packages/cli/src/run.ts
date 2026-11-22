@@ -4,10 +4,20 @@ import {
   AnalyzeError,
   analyzeProject,
   createFileCache,
+  writeReportAtomic,
   type AnalyzeDeps,
   type Report,
   type Severity,
 } from '@vulnforge/core';
+import {
+  ForgeError,
+  attachSuggestions,
+  createForgeClient,
+  explainFindings,
+  loadForgeConfig,
+  suggestForReport,
+  type ForgeClient,
+} from '@vulnforge/forge';
 
 import { EXIT_CODES } from './exit-codes.js';
 import { parseArgs, type AnalyzeFlags } from './args.js';
@@ -35,6 +45,8 @@ export interface CliIo {
 
 export interface CliDeps extends AnalyzeDeps {
   readonly signal?: AbortSignal;
+  /** Test seam: a prebuilt Forge client. Real runs build one from the env. */
+  readonly forgeClient?: ForgeClient;
 }
 
 const SEVERITY_RANK: Readonly<Record<Severity, number>> = {
@@ -89,6 +101,11 @@ export function errorExitCode(error: AnalyzeError): number {
 }
 
 async function runAnalyze(flags: AnalyzeFlags, io: CliIo, deps: CliDeps): Promise<number> {
+  if (flags.explain && flags.format === 'json') {
+    io.stderr('error: --explain prints human text, so it needs --format table\n');
+    return EXIT_CODES.usage;
+  }
+
   const showProgress = progressEnabled({
     isStderrTTY: io.isStderrTTY,
     quiet: flags.quiet,
@@ -101,10 +118,20 @@ async function runAnalyze(flags: AnalyzeFlags, io: CliIo, deps: CliDeps): Promis
   const projectDir = resolve(io.cwd, flags.path);
   const outPath = resolve(io.cwd, flags.out);
 
+  const forgeConfig = loadForgeConfig({
+    VULNFORGE_AI_BASE_URL: io.env.VULNFORGE_AI_BASE_URL,
+    VULNFORGE_AI_MODEL: io.env.VULNFORGE_AI_MODEL,
+    VULNFORGE_AI_API_KEY: io.env.VULNFORGE_AI_API_KEY,
+    VULNFORGE_AI_TIMEOUT_MS: io.env.VULNFORGE_AI_TIMEOUT_MS,
+  });
+  const forgeAvailable = deps.forgeClient !== undefined || forgeConfig !== null;
+  // the write is delayed past the Forge step only when Forge will actually run
+  const wantsSuggest = flags.suggest && forgeAvailable;
   const result = await analyzeProject(
     {
       projectDir,
-      outPath,
+      // with --suggest the enriched report is written after the Forge step
+      ...(wantsSuggest ? {} : { outPath }),
       toolVersion: io.version,
       ...(flags.ecosystem === null ? {} : { ecosystem: flags.ecosystem }),
       offline: flags.offline,
@@ -132,7 +159,58 @@ async function runAnalyze(flags: AnalyzeFlags, io: CliIo, deps: CliDeps): Promis
     return errorExitCode(result.error);
   }
 
-  const { report } = result;
+  let report: Report = result.report;
+
+  // Opt-in Forge steps. The AI layer never fails a scan and never changes findings.
+  if ((flags.suggest || flags.explain) && !forgeAvailable) {
+    io.stderr(
+      'forge: not configured (set VULNFORGE_AI_BASE_URL for a local server or VULNFORGE_AI_API_KEY for a hosted one); skipping the AI step\n',
+    );
+  } else if (flags.suggest || flags.explain) {
+    const client =
+      deps.forgeClient ?? createForgeClient(forgeConfig as NonNullable<typeof forgeConfig>);
+    if (flags.suggest) {
+      try {
+        const { suggestions, warnings } = await suggestForReport(report, { client });
+        for (const warning of warnings) io.stderr(`forge: ${warning}\n`);
+        report = attachSuggestions(report, suggestions);
+        if (!flags.quiet)
+          io.stderr(`forge: added ${suggestions.length} suggestion(s) to the report\n`);
+      } catch (error) {
+        if (error instanceof ForgeError) {
+          io.stderr(`forge: suggestion step skipped: ${error.message}\n`);
+        } else {
+          throw error;
+        }
+      }
+      // the enriched (or, on Forge failure, the original) report lands now
+      try {
+        writeReportAtomic(outPath, report, deps.pid ?? process.pid);
+      } catch {
+        io.stderr(`error: could not write report to ${outPath}\n`);
+        return EXIT_CODES.internal;
+      }
+    }
+    if (flags.explain) {
+      try {
+        const { explanations, warnings } = await explainFindings(report, { client });
+        for (const warning of warnings) io.stderr(`forge: ${warning}\n`);
+        if (explanations.length > 0) {
+          const blocks = explanations.map(
+            (entry) =>
+              `\n--- ${entry.findingKey} ---\n${entry.explanation}\nfix: ${entry.remediation}`,
+          );
+          io.stdout(`\nForge explanations (${explanations.length}):\n${blocks.join('\n')}\n`);
+        }
+      } catch (error) {
+        if (error instanceof ForgeError) {
+          io.stderr(`forge: explanation step skipped: ${error.message}\n`);
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
 
   // Report output on stdout only. A renderer crash exits 3, never 1.
   try {
@@ -157,8 +235,9 @@ async function runAnalyze(flags: AnalyzeFlags, io: CliIo, deps: CliDeps): Promis
     return EXIT_CODES.internal;
   }
 
-  if (!flags.quiet && result.reportPath !== null) {
-    io.stderr(`wrote report: ${result.reportPath}\n`);
+  const writtenPath = wantsSuggest ? outPath : result.reportPath;
+  if (!flags.quiet && writtenPath !== null) {
+    io.stderr(`wrote report: ${writtenPath}\n`);
   }
 
   return decideExitCode(report, flags);

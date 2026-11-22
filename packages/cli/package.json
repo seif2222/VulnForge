@@ -27,7 +27,8 @@
     "start": "node ./dist/bin.js"
   },
   "dependencies": {
-    "@vulnforge/core": "workspace:*"
+    "@vulnforge/core": "workspace:*",
+    "@vulnforge/forge": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

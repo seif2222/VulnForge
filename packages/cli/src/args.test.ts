@@ -22,6 +22,8 @@ describe('parseArgs', () => {
       allowIncomplete: false,
       quiet: false,
       noColor: false,
+      explain: false,
+      suggest: false,
     });
   });
 

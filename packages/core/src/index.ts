@@ -129,7 +129,7 @@ export { rankFindings, scoreFinding } from './rank.js';
 export { IgnoreFileError, applyIgnores, parseIgnoreFile, rulesFromFlags } from './ignore.js';
 export type { IgnoreResult, IgnoreRule } from './ignore.js';
 
-export { ANALYZE_ERROR_CODES, AnalyzeError, analyzeProject } from './analyze.js';
+export { ANALYZE_ERROR_CODES, AnalyzeError, analyzeProject, writeReportAtomic } from './analyze.js';
 export type {
   AnalyzeDeps,
   AnalyzeErrorCode,
