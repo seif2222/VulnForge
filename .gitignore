@@ -69,3 +69,17 @@ reports/*.tmp
 
 # Built dashboard assets (pnpm build regenerates them)
 packages/cli/assets/
+
+# Local generated reports and ML artifacts (curated fixtures remain tracked)
+/report.json
+/forge-output/
+/checkpoints/
+/adapter/
+/runs/
+wandb/
+.ipynb_checkpoints/
+__pycache__/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
