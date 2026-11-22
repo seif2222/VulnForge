@@ -253,18 +253,30 @@ async function runAnalyze(flags: AnalyzeFlags, io: CliIo, deps: CliDeps): Promis
  */
 async function runDashboard(flags: DashboardFlags, io: CliIo): Promise<number> {
   const assetsRoot = resolve(import.meta.dirname, '..', 'assets', 'dashboard');
+  const forgeConfig = loadForgeConfig({
+    VULNFORGE_AI_BASE_URL: io.env.VULNFORGE_AI_BASE_URL,
+    VULNFORGE_AI_MODEL: io.env.VULNFORGE_AI_MODEL,
+    VULNFORGE_AI_API_KEY: io.env.VULNFORGE_AI_API_KEY,
+    VULNFORGE_AI_TIMEOUT_MS: io.env.VULNFORGE_AI_TIMEOUT_MS,
+  });
   const server = await startDashboardServer({
     port: flags.port ?? undefined,
     reportPath: flags.reportPath ?? undefined,
     assetsRoot,
     toolVersion: io.version,
-    aiAvailable:
-      loadForgeConfig({
-        VULNFORGE_AI_BASE_URL: io.env.VULNFORGE_AI_BASE_URL,
-        VULNFORGE_AI_MODEL: io.env.VULNFORGE_AI_MODEL,
-        VULNFORGE_AI_API_KEY: io.env.VULNFORGE_AI_API_KEY,
-        VULNFORGE_AI_TIMEOUT_MS: io.env.VULNFORGE_AI_TIMEOUT_MS,
-      }) !== null,
+    aiAvailable: forgeConfig !== null,
+    // When a provider is configured, scans launched from the dashboard can ask
+    // Forge for explanations. One client per suggestion pass; Forge failures
+    // surface as scan-level warnings, never scan failures.
+    ...(forgeConfig === null
+      ? {}
+      : {
+          suggest: async (report) => {
+            const client = createForgeClient(forgeConfig);
+            const { suggestions } = await suggestForReport(report, { client });
+            return attachSuggestions(report, suggestions);
+          },
+        }),
   });
   if (!flags.quiet) {
     io.stderr(`vulnforge dashboard listening at ${server.url}\n`);

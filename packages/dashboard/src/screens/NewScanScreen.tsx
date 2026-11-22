@@ -1,16 +1,38 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import type { StatusPayload } from '../lib/api.js';
+import { fetchStatus } from '../lib/api.js';
 import type { ScanSession } from '../lib/useScan.js';
 
 /**
  * Start New Scan: target path, launch, honest blocked reasons. The server knows
  * the real preflight facts once the engine reads the target; the dashboard never
- * invents them.
+ * invents them. The Forge explanations checkbox appears only when the server
+ * reports an AI provider is actually configured (capabilities.ai).
  */
 export function NewScanScreen(props: { readonly session: ScanSession }) {
   const [target, setTarget] = useState('');
+  const [aiExplanations, setAiExplanations] = useState(true);
+  const [status, setStatus] = useState<StatusPayload | null>(null);
   const { session } = props;
   const busy = ['scanning', 'analyzing', 'detected'].includes(session.ui.state);
+  const aiAvailable = status?.capabilities.ai === true;
+
+  useEffect(() => {
+    let alive = true;
+    fetchStatus()
+      .then((payload) => {
+        if (alive) {
+          setStatus(payload);
+        }
+      })
+      .catch(() => {
+        // No status means no checkbox: the scan works without it either way.
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className="grid-single">
@@ -20,7 +42,7 @@ export function NewScanScreen(props: { readonly session: ScanSession }) {
           onSubmit={(event) => {
             event.preventDefault();
             if (target.trim() !== '' && !busy) {
-              session.launch(target.trim());
+              session.launch(target.trim(), aiAvailable && aiExplanations);
             }
           }}>
           <label htmlFor="scan-target" className="muted mono">
@@ -34,6 +56,20 @@ export function NewScanScreen(props: { readonly session: ScanSession }) {
             placeholder="/path/to/project"
             disabled={busy}
           />
+          {aiAvailable && (
+            <label htmlFor="scan-ai" className="checkbox-row">
+              <input
+                id="scan-ai"
+                type="checkbox"
+                checked={aiExplanations}
+                onChange={(event) => setAiExplanations(event.target.checked)}
+                disabled={busy}
+              />
+              <span className="muted mono">
+                ask Forge to explain each finding (AI suggestion, not evidence)
+              </span>
+            </label>
+          )}
           <div className="form-actions">
             <button type="submit" className="primary" disabled={busy || target.trim() === ''}>
               {busy ? 'scan running…' : 'launch scan'}

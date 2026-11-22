@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Report, ScanHistoryEntry, UiScanState } from './core.js';
 import { INITIAL_UI_STATE, historyEntryFromReport, transition } from './core.js';
-import type { ScanProgress } from './api.js';
-import { fetchStartupReport, launchScan, subscribeScanEvents } from './api.js';
+import type { ScanProgress, StructurePayload } from './api.js';
+import { fetchStartupReport, fetchStructure, launchScan, subscribeScanEvents } from './api.js';
 
 export interface ScanSession {
   readonly ui: UiScanState;
@@ -12,7 +12,11 @@ export interface ScanSession {
   readonly history: readonly ScanHistoryEntry[];
   /** Every package the engine queried, in real arrival order (from SSE progress). */
   readonly scannedPackages: readonly string[];
-  readonly launch: (projectPath: string) => void;
+  /** The real file/folder structure of the scan target; null until fetched. */
+  readonly structure: StructurePayload | null;
+  /** True when the structure could not be listed for the target (said plainly in the UI). */
+  readonly structureUnavailable: boolean;
+  readonly launch: (projectPath: string, aiExplanations: boolean) => void;
   readonly cancel: () => void;
   readonly reset: () => void;
 }
@@ -38,6 +42,9 @@ export function useScan(): ScanSession {
   const [reportLoad, setReportLoad] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [history, setHistory] = useState<readonly ScanHistoryEntry[]>([]);
   const [scannedPackages, setScannedPackages] = useState<readonly string[]>([]);
+  const [structure, setStructure] = useState<StructurePayload | null>(null);
+  const [structureUnavailable, setStructureUnavailable] = useState(false);
+  const structureSeq = useRef(0);
   const cancelRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -103,14 +110,33 @@ export function useScan(): ScanSession {
     return unsubscribe;
   }, []);
 
-  const launch = useCallback((projectPath: string) => {
+  const launch = useCallback((projectPath: string, aiExplanations: boolean) => {
     const startedAt = new Date().toTimeString().slice(0, 8);
     setScannedPackages([]);
+    setStructure(null);
+    setStructureUnavailable(false);
+    const seq = (structureSeq.current += 1);
+    fetchStructure(projectPath)
+      .then((listed) => {
+        if (seq !== structureSeq.current) {
+          return; // a newer launch owns the structure state
+        }
+        if (listed === null) {
+          setStructureUnavailable(true);
+        } else {
+          setStructure(listed);
+        }
+      })
+      .catch(() => {
+        if (seq === structureSeq.current) {
+          setStructureUnavailable(true);
+        }
+      });
     setUi(
       (current) =>
         transition(current, { type: 'scan-started', target: projectPath, startedAt }).next,
     );
-    const scan = launchScan(projectPath);
+    const scan = launchScan(projectPath, aiExplanations);
     cancelRef.current = scan.cancel;
     scan.response
       .then((result) => {
@@ -150,8 +176,22 @@ export function useScan(): ScanSession {
 
   const reset = useCallback(() => {
     setScannedPackages([]);
+    setStructure(null);
+    setStructureUnavailable(false);
+    structureSeq.current += 1;
     setUi((current) => transition(current, { type: 'reset' }).next);
   }, []);
 
-  return { ui, report, reportLoad, history, scannedPackages, launch, cancel, reset };
+  return {
+    ui,
+    report,
+    reportLoad,
+    history,
+    scannedPackages,
+    structure,
+    structureUnavailable,
+    launch,
+    cancel,
+    reset,
+  };
 }

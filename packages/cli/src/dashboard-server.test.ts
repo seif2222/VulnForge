@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { request as httpRequest } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -9,9 +9,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   DashboardError,
+  listStructure,
   startDashboardServer,
   type AnalyzeFn,
   type RunningServer,
+  type SuggestFn,
 } from './dashboard-server.js';
 
 /**
@@ -417,5 +419,155 @@ describe('dashboard server: scan route', () => {
     const body = await readSseUntil(server.port, (text) => text.includes('"state":"idle"'));
     expect(body).toContain('event: state');
     expect(body).toContain('"state":"idle"');
+  });
+});
+describe('dashboard server: scan route aiExplanations', () => {
+  // The fixture already carries one suggestion (PyYAML); the Forge pass adds one for requests.
+  const forgeSuggestion = {
+    findingKey: 'CVE-2018-18074|requests@2.19.1',
+    saferVersion: '2.20.0',
+    alternativePackage: null,
+    rationale: 'upgrade past the vulnerable line',
+    provider: 'llm' as const,
+  };
+
+  async function startWith(suggest: SuggestFn): Promise<RunningServer> {
+    return startDashboardServer({
+      port: 0,
+      assetsRoot,
+      toolVersion: '0.1.0-test',
+      aiAvailable: true,
+      analyze: okAnalyze(),
+      suggest,
+    });
+  }
+
+  async function postScan(port: number, aiExplanations: boolean): Promise<unknown> {
+    const res = await fetch(`http://127.0.0.1:${port}/api/scan`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ projectPath: '/repo/demo', aiExplanations }),
+    });
+    expect(res.status).toBe(200);
+    return res.json();
+  }
+
+  it('attaches Forge suggestions when the client asks and a provider is wired', async () => {
+    const ai = await startWith((report) =>
+      Promise.resolve({ ...report, suggestions: [...report.suggestions, forgeSuggestion] }),
+    );
+    try {
+      const body = (await postScan(ai.port, true)) as {
+        suggestions: { findingKey: string; provider: string }[];
+      };
+      expect(body.suggestions).toHaveLength(2);
+      const added = body.suggestions.find(
+        (entry) => entry.findingKey === forgeSuggestion.findingKey,
+      );
+      expect(added?.provider).toBe('llm');
+    } finally {
+      await ai.close();
+    }
+  });
+
+  it('does not run the Forge pass when the client does not ask', async () => {
+    let calls = 0;
+    const ai = await startWith((report) => {
+      calls += 1;
+      return Promise.resolve(report);
+    });
+    try {
+      const body = (await postScan(ai.port, false)) as { suggestions: unknown[] };
+      expect(body.suggestions).toHaveLength(1);
+      expect(calls).toBe(0);
+    } finally {
+      await ai.close();
+    }
+  });
+
+  it('ignores aiExplanations when no provider is wired', async () => {
+    // The shared test server has no suggest pass configured.
+    const body = (await postScan(server.port, true)) as { suggestions: unknown[] };
+    expect(body.suggestions).toHaveLength(1);
+  });
+
+  it('keeps the base report when the Forge pass throws', async () => {
+    const ai = await startWith(() => Promise.reject(new Error('provider down')));
+    try {
+      const body = (await postScan(ai.port, true)) as { suggestions: unknown[] };
+      expect(body.suggestions).toHaveLength(1);
+    } finally {
+      await ai.close();
+    }
+  });
+
+  it('keeps the base report when the enriched report fails validation', async () => {
+    const ai = await startWith((report) =>
+      Promise.resolve({
+        ...report,
+        suggestions: [
+          ...report.suggestions,
+          { ...forgeSuggestion, findingKey: 'GHSA-0000-0000-0000|nope@1.0.0' },
+        ],
+      }),
+    );
+    try {
+      const body = (await postScan(ai.port, true)) as { suggestions: unknown[] };
+      expect(body.suggestions).toHaveLength(1);
+    } finally {
+      await ai.close();
+    }
+  });
+});
+describe('dashboard server: structure route', () => {
+  it('lists the real tree with node_modules collapsed to package dirs', () => {
+    const project = join(workDir, 'sample-project');
+    mkdirSync(join(project, 'src', 'deep', 'deeper', 'tooDeep'), { recursive: true });
+    mkdirSync(join(project, 'node_modules', 'lodash'), { recursive: true });
+    mkdirSync(join(project, 'node_modules', '@scope', 'left-pad'), { recursive: true });
+    mkdirSync(join(project, '.git', 'objects'), { recursive: true });
+    writeFileSync(join(project, 'package.json'), '{}');
+    writeFileSync(join(project, 'src', 'index.js'), '//');
+    const { entries, truncated } = listStructure(project);
+    expect(truncated).toBe(false);
+    const paths = entries.map((entry) => entry.path);
+    expect(paths).toContain('package.json');
+    expect(paths).toContain('src');
+    expect(paths).toContain('src/index.js');
+    expect(paths).toContain('src/deep/deeper/tooDeep');
+    expect(paths).toContain('node_modules');
+    expect(paths).toContain('node_modules/lodash');
+    expect(paths).toContain('node_modules/@scope/left-pad');
+    // collapsed: nothing inside an installed package, nothing from .git
+    expect(paths.some((p) => p.startsWith('node_modules/lodash/'))).toBe(false);
+    expect(paths.some((p) => p.startsWith('.git'))).toBe(false);
+    // directories sort before files
+    const names = entries.filter((e) => e.depth === 0).map((e) => e.path);
+    expect(names.indexOf('node_modules')).toBeLessThan(names.indexOf('package.json'));
+  });
+
+  it('marks truncation instead of listing without end', () => {
+    const project = join(workDir, 'wide-project');
+    mkdirSync(project, { recursive: true });
+    for (let i = 0; i < 450; i += 1) {
+      writeFileSync(join(project, `file-${String(i).padStart(3, '0')}.txt`), 'x');
+    }
+    const { entries, truncated } = listStructure(project);
+    expect(truncated).toBe(true);
+    expect(entries.length).toBeLessThanOrEqual(400);
+  });
+
+  it('answers 404 for a missing path and 400 without a path param', async () => {
+    const missing = await fetch(
+      `${base}/api/structure?path=${encodeURIComponent(join(workDir, 'nope'))}`,
+    );
+    expect(missing.status).toBe(404);
+    const bare = await fetch(`${base}/api/structure`);
+    expect(bare.status).toBe(400);
+    const ok = await fetch(`${base}/api/structure?path=${encodeURIComponent(workDir)}`);
+    expect(ok.status).toBe(200);
+    const body = (await ok.json()) as { root: string; entries: unknown[]; truncated: boolean };
+    expect(body.root).toBe(workDir);
+    expect(Array.isArray(body.entries)).toBe(true);
   });
 });

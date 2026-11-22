@@ -8,10 +8,11 @@
  * always badge + glyph + text, never color alone; low severity is slate, never
  * "ok green".
  *
- * Palette (chosen by the project owner, 2026-11-22): Deep Teal #0F3D47 (structure/brand),
- * Ice White #F4F8F9 (primary text), Soft Peach #F59E7B (accent/highlights).
- * Backgrounds and borders are darkened teal steps so the brand reads even
- * where #0F3D47 itself would be too dark to notice.
+ * Palette (chosen by the project owner, 2026-11-22, from the ChainX reference
+ * dashboard he sent and asked to be applied in full detail): deep navy-violet
+ * surfaces, a vibrant violet accent, soft rounded cards, big bold stat
+ * numbers. Severity stays clearly distinct from the violet accent; low
+ * severity is slate, never "ok green".
  */
 
 export interface DesignTokens {
@@ -90,42 +91,42 @@ export interface DesignTokens {
 export const DESIGN_TOKENS: DesignTokens = {
   color: {
     bg: {
-      base: '#07181d',
-      raised: '#0c242c',
-      overlay: '#11313b',
+      base: '#0b0a14',
+      raised: '#15131f',
+      overlay: '#1e1c2b',
     },
     border: {
-      subtle: '#1d4a57',
-      strong: '#2f6675',
+      subtle: '#262537',
+      strong: '#3a3852',
     },
     text: {
-      primary: '#f4f8f9',
-      secondary: '#94aeb6',
-      disabled: '#54707a',
-      inverse: '#0f3d47',
+      primary: '#f2f0fa',
+      secondary: '#9b97ad',
+      disabled: '#716e88',
+      inverse: '#0b0a14',
     },
     accent: {
-      default: '#f59e7b',
-      strong: '#fbc3a6',
-      onAccent: '#0f3d47',
-      tint: '#38271e',
+      default: '#7f63ff',
+      strong: '#9a82ff',
+      onAccent: '#0b0a14',
+      tint: '#221a3d',
     },
     severity: {
-      critical: '#ff6b6b',
-      // burnt orange: stays clearly distinct from the peach accent
-      high: '#e8743b',
-      medium: '#e8c352',
+      critical: '#f2506e',
+      // warm orange: stays clearly distinct from the violet accent
+      high: '#f5974b',
+      medium: '#f2c14e',
       // low is slate: informational, never "ok green"
-      low: '#8fa3ad',
+      low: '#8f8ca6',
       tint: {
-        critical: '#3e1a1e',
-        high: '#37251b',
-        medium: '#33301d',
-        low: '#1e282e',
+        critical: '#361521',
+        high: '#35230f',
+        medium: '#33290f',
+        low: '#23222e',
       },
     },
-    success: '#4ec9a6',
-    danger: '#ff6b6b',
+    success: '#3ecf9a',
+    danger: '#f2506e',
   },
   glyph: {
     critical: '●',
@@ -145,9 +146,9 @@ export const DESIGN_TOKENS: DesignTokens = {
     xl: 32,
   },
   radius: {
-    sm: 4,
-    md: 8,
-    lg: 12,
+    sm: 6,
+    md: 12,
+    lg: 18,
   },
   motion: {
     fastMs: 120,

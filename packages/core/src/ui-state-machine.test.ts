@@ -46,6 +46,20 @@ describe('ui state machine', () => {
     expect(analyzing.next.state).toBe('analyzing');
   });
 
+  it('a fast scan may complete before the findings land: detected still wins', () => {
+    // SSE 'completed' can beat the response body on cached scans; the report's
+    // findings then upgrade the end state instead of being swallowed.
+    const completed = transition(started.next, { type: 'scan-completed' });
+    const detected = transition(completed.next, { type: 'detected', severity: 'medium' });
+    expect(detected.accepted).toBe(true);
+    expect(detected.next.state).toBe('detected');
+    expect(detected.next.detectedSeverity).toBe('medium');
+    // and a late 'completed' must never hide the findings again
+    const late = transition(detected.next, { type: 'scan-completed' });
+    expect(late.accepted).toBe(false);
+    expect(late.next.state).toBe('detected');
+  });
+
   it('flares detected and keeps the worst severity seen', () => {
     const high = transition(started.next, { type: 'detected', severity: 'high' });
     expect(high.next.state).toBe('detected');

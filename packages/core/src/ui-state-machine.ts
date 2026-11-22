@@ -121,7 +121,9 @@ export function transition(current: UiScanState, event: ScanEvent): TransitionRe
       return reject(current);
 
     case 'detected':
-      if (isRunning(current.state)) {
+      // 'completed' included: on fast scans the SSE completed snapshot lands
+      // before the response's findings, and detected is the truer end state.
+      if (isRunning(current.state) || current.state === 'completed') {
         const previous = current.detectedSeverity;
         const worst =
           previous !== null &&
@@ -133,7 +135,8 @@ export function transition(current: UiScanState, event: ScanEvent): TransitionRe
       return reject(current);
 
     case 'scan-completed':
-      if (isRunning(current.state)) {
+      // not from 'detected': a late completed must not hide the findings.
+      if (current.state === 'scanning' || current.state === 'analyzing') {
         return accept({ ...current, state: 'completed' });
       }
       return reject(current);

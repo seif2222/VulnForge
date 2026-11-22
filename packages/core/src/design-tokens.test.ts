@@ -42,37 +42,39 @@ describe('design tokens: freshness of generated files', () => {
 describe('design tokens: golden pins (literal values, no imports from the source)', () => {
   it('pins the accent, severity ramp and success hexes in the generated CSS', () => {
     const css = readFileSync(GENERATED_CSS_PATH, 'utf8');
-    expect(css).toContain('--vf-accent: #f59e7b;');
-    expect(css).toContain('--vf-severity-critical: #ff6b6b;');
-    expect(css).toContain('--vf-severity-high: #e8743b;');
-    expect(css).toContain('--vf-severity-medium: #e8c352;');
-    expect(css).toContain('--vf-severity-low: #8fa3ad;');
-    expect(css).toContain('--vf-success: #4ec9a6;');
+    expect(css).toContain('--vf-accent: #7f63ff;');
+    expect(css).toContain('--vf-severity-critical: #f2506e;');
+    expect(css).toContain('--vf-severity-high: #f5974b;');
+    expect(css).toContain('--vf-severity-medium: #f2c14e;');
+    expect(css).toContain('--vf-severity-low: #8f8ca6;');
+    expect(css).toContain('--vf-success: #3ecf9a;');
   });
 
   it('pins the same ramp in the WebGL color table (canvas cannot read CSS variables)', () => {
     const webgl = readFileSync(GENERATED_WEBGL_PATH, 'utf8');
-    expect(webgl).toContain("accent: '#f59e7b',");
-    expect(webgl).toContain("severityCritical: '#ff6b6b',");
-    expect(webgl).toContain("severityHigh: '#e8743b',");
-    expect(webgl).toContain("severityMedium: '#e8c352',");
-    expect(webgl).toContain("severityLow: '#8fa3ad',");
-    expect(webgl).toContain("success: '#4ec9a6',");
+    expect(webgl).toContain("accent: '#7f63ff',");
+    expect(webgl).toContain("severityCritical: '#f2506e',");
+    expect(webgl).toContain("severityHigh: '#f5974b',");
+    expect(webgl).toContain("severityMedium: '#f2c14e',");
+    expect(webgl).toContain("severityLow: '#8f8ca6',");
+    expect(webgl).toContain("success: '#3ecf9a',");
   });
 
   it('pins the TUI severity SGR fallbacks (xterm-256 and 16-color)', () => {
     const tui = readFileSync(GENERATED_TUI_PATH, 'utf8');
     expect(tui).toContain(
-      "severityCritical: { hex: '#ff6b6b', xterm256: 210, ansi16: 'brightRed' }",
+      "severityCritical: { hex: '#f2506e', xterm256: 210, ansi16: 'brightRed' }",
     );
-    expect(tui).toContain("severityHigh: { hex: '#e8743b', xterm256: 209, ansi16: 'brightRed' }");
+    expect(tui).toContain("severityHigh: { hex: '#f5974b', xterm256: 215, ansi16: 'brightRed' }");
     expect(tui).toContain(
-      "severityMedium: { hex: '#e8c352', xterm256: 222, ansi16: 'brightYellow' }",
+      "severityMedium: { hex: '#f2c14e', xterm256: 222, ansi16: 'brightYellow' }",
     );
-    expect(tui).toContain("severityLow: { hex: '#8fa3ad', xterm256: 247, ansi16: 'brightBlack' }");
+    expect(tui).toContain("severityLow: { hex: '#8f8ca6', xterm256: 246, ansi16: 'brightBlack' }");
     // Greys must never map to a hue (the old Euclidean mapping made them magenta).
-    expect(tui).toContain("textSecondary: { hex: '#94aeb6', xterm256: 248, ansi16: 'white' }");
-    expect(tui).toContain("accent: { hex: '#f59e7b', xterm256: 216, ansi16: 'brightRed' }");
+    expect(tui).toContain(
+      "textSecondary: { hex: '#9b97ad', xterm256: 247, ansi16: 'brightBlack' }",
+    );
+    expect(tui).toContain("accent: { hex: '#7f63ff', xterm256: 105, ansi16: 'brightBlue' }");
   });
 
   it('generated files carry the do-not-edit header naming the source', () => {

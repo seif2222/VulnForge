@@ -47,12 +47,12 @@ export interface ScanLaunch {
   readonly cancel: () => void;
 }
 
-export function launchScan(projectPath: string): ScanLaunch {
+export function launchScan(projectPath: string, aiExplanations: boolean): ScanLaunch {
   const controller = new AbortController();
   const response = fetch('/api/scan', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ projectPath }),
+    body: JSON.stringify({ projectPath, aiExplanations }),
     signal: controller.signal,
   }).then(async (res) => {
     if (!res.ok) {
@@ -79,4 +79,31 @@ export function subscribeScanEvents(
     onProgress(JSON.parse(event.data as string) as ScanProgress);
   });
   return () => source.close();
+}
+
+export interface StructureEntryPayload {
+  readonly path: string;
+  readonly name: string;
+  readonly kind: 'dir' | 'file';
+  readonly depth: number;
+}
+
+export interface StructurePayload {
+  readonly root: string;
+  readonly entries: readonly StructureEntryPayload[];
+  readonly truncated: boolean;
+}
+
+/** The real project tree for the live-scan structure view; null when unavailable. */
+export async function fetchStructure(
+  projectPath: string,
+  signal?: AbortSignal,
+): Promise<StructurePayload | null> {
+  const res = await fetch(`/api/structure?path=${encodeURIComponent(projectPath)}`, {
+    signal: signal ?? null,
+  });
+  if (!res.ok) {
+    return null;
+  }
+  return (await res.json()) as StructurePayload;
 }

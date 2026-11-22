@@ -1,5 +1,14 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  statSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 
@@ -64,6 +73,126 @@ export class DashboardError extends Error {
 
 export type AnalyzeFn = (options: AnalyzeOptions, deps?: AnalyzeDeps) => Promise<AnalyzeResult>;
 
+/** Forge suggestion pass: takes a scan report, returns it with suggestions attached. */
+export type SuggestFn = (report: Report) => Promise<Report>;
+
+/** One row of the project structure listing shown during a live scan. */
+export interface StructureEntry {
+  /** Slash-separated path relative to the scanned root. */
+  readonly path: string;
+  readonly name: string;
+  readonly kind: 'dir' | 'file';
+  /** 0 = direct child of the scanned root. */
+  readonly depth: number;
+}
+
+const STRUCTURE_MAX_ENTRIES = 400;
+const STRUCTURE_MAX_DEPTH = 3;
+const STRUCTURE_SKIP = new Set(['.git', '.svn', '.hg']);
+
+/**
+ * Lists the real project tree for the live-scan structure view. Directories
+ * first, alphabetical; node_modules is collapsed to its package dirs (those
+ * are the rows scan progress maps onto) without descending into them. Capped
+ * and honest about truncation.
+ */
+export function listStructure(root: string): {
+  readonly entries: StructureEntry[];
+  readonly truncated: boolean;
+} {
+  const entries: StructureEntry[] = [];
+  let truncated = false;
+
+  const push = (entry: StructureEntry): boolean => {
+    if (entries.length >= STRUCTURE_MAX_ENTRIES) {
+      truncated = true;
+      return false;
+    }
+    entries.push(entry);
+    return true;
+  };
+
+  const walk = (dir: string, rel: string, depth: number): void => {
+    if (truncated || depth > STRUCTURE_MAX_DEPTH) {
+      return;
+    }
+    let items;
+    try {
+      items = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return; // unreadable directories are simply absent from the listing
+    }
+    items.sort(
+      (a, b) => Number(b.isDirectory()) - Number(a.isDirectory()) || a.name.localeCompare(b.name),
+    );
+    for (const item of items) {
+      if (STRUCTURE_SKIP.has(item.name)) {
+        continue;
+      }
+      const childRel = rel === '' ? item.name : `${rel}/${item.name}`;
+      const isDir = item.isDirectory();
+      if (!push({ path: childRel, name: item.name, kind: isDir ? 'dir' : 'file', depth })) {
+        return;
+      }
+      if (!isDir) {
+        continue;
+      }
+      if (item.name === 'node_modules') {
+        // Collapse: list package dirs (and scoped packages one level deeper)
+        // so scan progress can point at the real installed package rows.
+        let packages;
+        try {
+          packages = readdirSync(join(dir, item.name), { withFileTypes: true });
+        } catch {
+          continue;
+        }
+        packages.sort((a, b) => a.name.localeCompare(b.name));
+        for (const pkg of packages) {
+          const pkgRel = `${childRel}/${pkg.name}`;
+          if (pkg.name.startsWith('@') && pkg.isDirectory()) {
+            if (!push({ path: pkgRel, name: pkg.name, kind: 'dir', depth: depth + 1 })) {
+              return;
+            }
+            let scoped;
+            try {
+              scoped = readdirSync(join(dir, item.name, pkg.name), { withFileTypes: true });
+            } catch {
+              continue;
+            }
+            scoped.sort((a, b) => a.name.localeCompare(b.name));
+            for (const inner of scoped) {
+              if (
+                !push({
+                  path: `${pkgRel}/${inner.name}`,
+                  name: inner.name,
+                  kind: inner.isDirectory() ? 'dir' : 'file',
+                  depth: depth + 2,
+                })
+              ) {
+                return;
+              }
+            }
+          } else if (
+            !push({
+              path: pkgRel,
+              name: pkg.name,
+              kind: pkg.isDirectory() ? 'dir' : 'file',
+              depth: depth + 1,
+            })
+          ) {
+            return;
+          }
+        }
+        continue;
+      }
+      walk(join(dir, item.name), childRel, depth + 1);
+    }
+  };
+
+  walk(root, '', 0);
+  return { entries, truncated };
+}
+
 export interface DashboardServerOptions {
   /** 0 picks a free port; used by tests. */
   readonly port?: number;
@@ -78,6 +207,12 @@ export interface DashboardServerOptions {
   /** Engine injection point for tests; defaults to the real analyzeProject. */
   readonly analyze?: AnalyzeFn;
   readonly analyzeDeps?: AnalyzeDeps;
+  /**
+   * Forge suggestion pass, applied to a fresh scan report when the client asks
+   * for AI explanations. Absent when no provider is configured. Forge must
+   * never fail a scan: the server swallows its errors and keeps the base report.
+   */
+  readonly suggest?: SuggestFn;
 }
 
 export interface RunningServer {
@@ -210,6 +345,11 @@ export async function startDashboardServer(
       return;
     }
 
+    if (req.method === 'GET' && pathname === '/api/structure') {
+      serveStructure(rawUrl, res);
+      return;
+    }
+
     if (req.method === 'GET' || req.method === 'HEAD') {
       serveStatic(pathname, res);
       return;
@@ -241,6 +381,33 @@ export async function startDashboardServer(
     for (const listener of eventListeners) {
       listener.write(line);
     }
+  }
+
+  /**
+   * The real file/folder structure of a scan target, for the live-scan
+   * structure view. Same trust model as launching a scan: local-only server,
+   * the user names their own project paths. Missing/unreadable targets answer
+   * honestly so the dashboard can say so instead of inventing a tree.
+   */
+  function serveStructure(rawUrl: string, res: ServerResponse): void {
+    const projectPath = new URL(rawUrl, 'http://127.0.0.1').searchParams.get('path');
+    if (projectPath === null || projectPath.trim() === '') {
+      sendJson(res, 400, { error: 'bad-project-path' });
+      return;
+    }
+    const root = resolve(projectPath);
+    try {
+      const stats = statSync(root);
+      if (!stats.isDirectory()) {
+        sendJson(res, 400, { error: 'not-a-directory' });
+        return;
+      }
+    } catch {
+      sendJson(res, 404, { error: 'path-not-found' });
+      return;
+    }
+    const { entries, truncated } = listStructure(root);
+    sendJson(res, 200, { root, entries, truncated });
   }
 
   async function serveScan(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -314,7 +481,6 @@ export async function startDashboardServer(
             };
             emit('progress', scan.lastProgress);
           },
-          ...(aiExplanations ? {} : {}),
         },
         options.analyzeDeps,
       );
@@ -325,8 +491,22 @@ export async function startDashboardServer(
           sendJson(res, 500, { error: 'invalid-report' });
           return;
         }
+        let report = result.report;
+        if (aiExplanations && options.suggest !== undefined) {
+          try {
+            const enriched = await options.suggest(report);
+            // Only swap in the enriched report when it still validates; Forge
+            // writes suggestions, never findings, and must never fail a scan.
+            const enrichedValidation = validateReport(enriched);
+            if (enrichedValidation.ok) {
+              report = enriched;
+            }
+          } catch {
+            // Forge failure keeps the base report.
+          }
+        }
         emit('state', { state: 'completed', runId: scan.runId });
-        sendJson(res, 200, result.report);
+        sendJson(res, 200, report);
         return;
       }
       if (result.cancelled === true) {
