@@ -10,6 +10,8 @@ export interface ScanSession {
   readonly report: Report | null;
   readonly reportLoad: 'loading' | 'ready' | 'empty' | 'error';
   readonly history: readonly ScanHistoryEntry[];
+  /** Every package the engine queried, in real arrival order (from SSE progress). */
+  readonly scannedPackages: readonly string[];
   readonly launch: (projectPath: string) => void;
   readonly cancel: () => void;
   readonly reset: () => void;
@@ -35,6 +37,7 @@ export function useScan(): ScanSession {
   const [report, setReport] = useState<Report | null>(null);
   const [reportLoad, setReportLoad] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [history, setHistory] = useState<readonly ScanHistoryEntry[]>([]);
+  const [scannedPackages, setScannedPackages] = useState<readonly string[]>([]);
   const cancelRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -83,6 +86,9 @@ export function useScan(): ScanSession {
         if (progress.pkg === null) {
           return;
         }
+        setScannedPackages((current) =>
+          current[current.length - 1] === progress.pkg ? current : [...current, progress.pkg ?? ''],
+        );
         setUi(
           (current) =>
             transition(current, {
@@ -99,6 +105,7 @@ export function useScan(): ScanSession {
 
   const launch = useCallback((projectPath: string) => {
     const startedAt = new Date().toTimeString().slice(0, 8);
+    setScannedPackages([]);
     setUi(
       (current) =>
         transition(current, { type: 'scan-started', target: projectPath, startedAt }).next,
@@ -142,8 +149,9 @@ export function useScan(): ScanSession {
   }, []);
 
   const reset = useCallback(() => {
+    setScannedPackages([]);
     setUi((current) => transition(current, { type: 'reset' }).next);
   }, []);
 
-  return { ui, report, reportLoad, history, launch, cancel, reset };
+  return { ui, report, reportLoad, history, scannedPackages, launch, cancel, reset };
 }

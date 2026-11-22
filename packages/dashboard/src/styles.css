@@ -807,3 +807,8 @@ input.text:focus-visible {
     height: 300px;
   }
 }
+
+.scene-scan {
+  height: 300px;
+  margin: var(--vf-space-md) 0;
+}
