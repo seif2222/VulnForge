@@ -290,10 +290,11 @@ describe('runCli command handling', () => {
     expect(stdout).toContain('vulnforge');
   });
 
-  it('planned commands exit 2 with a clear message', async () => {
-    const { code, stderr } = await run(['ui'], tempDir());
-    expect(code).toBe(EXIT_CODES.usage);
-    expect(stderr).toContain('not available in this build');
+  it('ui outside a terminal falls back to the banner, exit 0', async () => {
+    const { code, stdout, stderr } = await run(['ui'], tempDir());
+    expect(code).toBe(EXIT_CODES.success);
+    expect(stdout).toContain('vulnforge');
+    expect(stderr).toContain('needs a terminal');
   });
 
   it('usage errors exit 2 and print usage to stderr', async () => {

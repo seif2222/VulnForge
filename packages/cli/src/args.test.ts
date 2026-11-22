@@ -89,7 +89,7 @@ describe('parseArgs', () => {
     expect(parseArgs(argv)).toEqual({ kind: 'usage-error', message });
   });
 
-  it('routes help, version, bare and planned commands', () => {
+  it('routes help, version, bare and ui commands', () => {
     expect(parseArgs([])).toEqual({ kind: 'bare' });
     expect(parseArgs(['help'])).toEqual({ kind: 'help' });
     expect(parseArgs(['--help'])).toEqual({ kind: 'help' });
@@ -99,6 +99,17 @@ describe('parseArgs', () => {
       kind: 'dashboard',
       flags: { command: 'dashboard', reportPath: null, port: null, quiet: false },
     });
-    expect(parseArgs(['ui'])).toEqual({ kind: 'planned', command: 'ui' });
+    expect(parseArgs(['ui'])).toEqual({
+      kind: 'ui',
+      flags: { command: 'ui', reportPath: null },
+    });
+    expect(parseArgs(['ui', 'report.json'])).toEqual({
+      kind: 'ui',
+      flags: { command: 'ui', reportPath: 'report.json' },
+    });
+    expect(parseArgs(['ui', 'a.json', 'b.json'])).toEqual({
+      kind: 'usage-error',
+      message: 'ui takes at most one report file',
+    });
   });
 });

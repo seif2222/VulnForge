@@ -23,10 +23,10 @@ export interface AnalyzeFlags {
 export type ParsedArgs =
   | { readonly kind: 'analyze'; readonly flags: AnalyzeFlags }
   | { readonly kind: 'dashboard'; readonly flags: DashboardFlags }
+  | { readonly kind: 'ui'; readonly flags: UiFlags }
   | { readonly kind: 'help' }
   | { readonly kind: 'version' }
   | { readonly kind: 'bare' }
-  | { readonly kind: 'planned'; readonly command: 'ui' }
   | { readonly kind: 'usage-error'; readonly message: string };
 
 export interface DashboardFlags {
@@ -35,6 +35,12 @@ export interface DashboardFlags {
   readonly reportPath: string | null;
   readonly port: number | null;
   readonly quiet: boolean;
+}
+
+export interface UiFlags {
+  readonly command: 'ui';
+  /** Optional report file opened in the TUI at startup; validated once on load. */
+  readonly reportPath: string | null;
 }
 
 const VALUE_FLAGS = [
@@ -75,7 +81,17 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     return { kind: 'version' };
   }
   if (first === 'ui') {
-    return { kind: 'planned', command: first };
+    let reportPath: string | null = null;
+    for (const arg of rest) {
+      if (arg.startsWith('-')) {
+        return usageError(`unknown ui flag: ${arg}`);
+      }
+      if (reportPath !== null) {
+        return usageError('ui takes at most one report file');
+      }
+      reportPath = arg;
+    }
+    return { kind: 'ui', flags: { command: 'ui', reportPath } };
   }
   if (first === 'dashboard') {
     let reportPath: string | null = null;

@@ -21,6 +21,7 @@ import {
 
 import { EXIT_CODES } from './exit-codes.js';
 import { DashboardError, startDashboardServer } from './dashboard-server.js';
+import { runTui } from './tui/app.js';
 import { parseArgs, type AnalyzeFlags, type DashboardFlags } from './args.js';
 import {
   ProgressRenderer,
@@ -299,13 +300,28 @@ export async function runCli(
       io.stdout(`${io.version}\n`);
       return EXIT_CODES.success;
     case 'bare':
-      io.stdout(`${banner(io.version)}\n`);
-      return EXIT_CODES.success;
-    case 'planned':
-      io.stderr(
-        `${parsed.command} is not available in this build - it lands in the dashboard/TUI phase.\n`,
-      );
-      return EXIT_CODES.usage;
+      if (!io.isStdoutTTY) {
+        io.stdout(`${banner(io.version)}\n`);
+        return EXIT_CODES.success;
+      }
+      try {
+        return await runTui(io, deps, null);
+      } catch (error) {
+        io.stderr(`error: internal: ${error instanceof Error ? error.message : String(error)}\n`);
+        return EXIT_CODES.internal;
+      }
+    case 'ui':
+      if (!io.isStdoutTTY) {
+        io.stdout(`${banner(io.version)}\n`);
+        io.stderr('the interactive UI needs a terminal; showing the banner instead\n');
+        return EXIT_CODES.success;
+      }
+      try {
+        return await runTui(io, deps, parsed.flags.reportPath);
+      } catch (error) {
+        io.stderr(`error: internal: ${error instanceof Error ? error.message : String(error)}\n`);
+        return EXIT_CODES.internal;
+      }
     case 'dashboard':
       try {
         return await runDashboard(parsed.flags, io);
