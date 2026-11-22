@@ -58,9 +58,27 @@ describe('createOsvHttp', () => {
 
     expect(url).toBe(OSV_BATCH_ENDPOINT);
     expect(init?.method).toBe('POST');
-    expect(requestBody(init)).toEqual({ queries: [QUERY, { ...QUERY, name: 'ms' }] });
+    // The wire format osv.dev accepts: nested package object, flat internal queries.
+    expect(requestBody(init)).toEqual({
+      queries: [
+        { package: { name: 'lodash', ecosystem: 'npm' }, version: '4.17.20' },
+        { package: { name: 'ms', ecosystem: 'npm' }, version: '4.17.20' },
+      ],
+    });
     expect(answers[0]).toHaveLength(1);
     expect(answers[1]).toHaveLength(0);
+  });
+
+  it('treats a result without a vulns key as clean, not malformed', async () => {
+    // osv.dev omits the vulns key when a package has no known vulnerabilities.
+    const fetchImpl: FetchSpy = vi.fn(() =>
+      Promise.resolve(jsonResponse({ results: [{ vulns: [{}] }, {}] })),
+    );
+
+    const answers = await client(fetchImpl).queryBatch([QUERY, { ...QUERY, name: 'ms' }]);
+
+    expect(answers[0]).toHaveLength(1);
+    expect(answers[1]).toEqual([]);
   });
 
   it('makes no request for an empty query list', async () => {
@@ -174,9 +192,9 @@ describe('createOsvHttp', () => {
     expect(error.message).toContain('answered 1 results for 2 queries');
   });
 
-  it('rejects a result without a vulns array', async () => {
+  it('rejects a result whose vulns field is not an array', async () => {
     const fetchImpl: FetchSpy = vi.fn(() =>
-      Promise.resolve(jsonResponse({ results: [{ vulns: [] }, { nothing: true }] })),
+      Promise.resolve(jsonResponse({ results: [{ vulns: [] }, { vulns: 'nope' }] })),
     );
 
     const error = await captureError(
@@ -189,5 +207,44 @@ describe('createOsvHttp', () => {
   it('publishes its error codes', () => {
     expect(OSV_ERROR_CODES).toContain('network-unavailable');
     expect(OSV_ERROR_CODES).toContain('malformed-response');
+  });
+
+  it('builds the request signal without AbortSignal.any or AbortSignal.timeout', async () => {
+    const fetchImpl = vi.fn<typeof fetch>(() => Promise.resolve(jsonResponse(batchResponse([0]))));
+    const http = client(fetchImpl);
+    await http.queryBatch([QUERY]);
+    const init = fetchImpl.mock.calls[0]?.[1];
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
+    expect(init?.signal?.aborted).toBe(false);
+  });
+
+  it('aborts the request when the caller signal fires', async () => {
+    const caller = new AbortController();
+    let observed: AbortSignal | null | undefined;
+    const fetchImpl = vi.fn<typeof fetch>((_url, init) => {
+      observed = init?.signal;
+      caller.abort();
+      return Promise.resolve(jsonResponse(batchResponse([0])));
+    });
+    const http = client(fetchImpl, { signal: caller.signal });
+    await http.queryBatch([QUERY]);
+    expect(observed?.aborted).toBe(true);
+  });
+
+  it('times the request out with a TimeoutError-named reason', async () => {
+    let observed: AbortSignal | null | undefined;
+    const fetchImpl = vi.fn<typeof fetch>(async (_url, init) => {
+      observed = init?.signal;
+      await new Promise<void>((resolvePromise) => {
+        observed?.addEventListener('abort', () => resolvePromise(), { once: true });
+      });
+      const reason = (observed as AbortSignal).reason as unknown;
+      expect(reason).toBeInstanceOf(DOMException);
+      expect((reason as DOMException).name).toBe('TimeoutError');
+      return jsonResponse(batchResponse([0]));
+    });
+    const http = client(fetchImpl, { timeoutMs: 5 });
+    await http.queryBatch([QUERY]);
+    expect(observed?.aborted).toBe(true);
   });
 });

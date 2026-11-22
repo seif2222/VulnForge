@@ -80,8 +80,24 @@ function retryAfterMs(response: Response): number | null {
 
 /** Caller cancellation plus the per-request timeout, whichever fires first. */
 function combinedSignal(timeoutMs: number, caller: AbortSignal | undefined): AbortSignal {
-  const timeout = AbortSignal.timeout(timeoutMs);
-  return caller === undefined ? timeout : AbortSignal.any([caller, timeout]);
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    controller.abort(new DOMException('The operation timed out.', 'TimeoutError'));
+  }, timeoutMs);
+  // Never keep the event loop alive for a timer whose request already finished.
+  timer.unref?.();
+  const onCallerAbort = (): void => {
+    clearTimeout(timer);
+    controller.abort(caller?.reason);
+  };
+  if (caller !== undefined) {
+    if (caller.aborted) {
+      onCallerAbort();
+    } else {
+      caller.addEventListener('abort', onCallerAbort, { once: true });
+    }
+  }
+  return controller.signal;
 }
 
 function chunk<T>(items: readonly T[], size: number): T[][] {
@@ -107,11 +123,33 @@ function parseBatchResponse(payload: unknown, expected: number): OsvVulnerabilit
   }
 
   return results.map((item) => {
-    if (!isRecord(item) || !Array.isArray(item['vulns'])) {
-      throw new OsvError('malformed-response', 'osv.dev returned a result without vulns', 1);
+    if (!isRecord(item)) {
+      throw new OsvError('malformed-response', 'osv.dev returned a non-object result', 1);
     }
-    return (item['vulns'] ?? []) as OsvVulnerability[];
+    // osv.dev omits the vulns key entirely when a package has no known vulnerabilities:
+    // an empty object result means "clean", not "malformed".
+    const vulns = item['vulns'];
+    if (vulns === undefined) {
+      return [];
+    }
+    if (!Array.isArray(vulns)) {
+      throw new OsvError('malformed-response', 'osv.dev returned a non-array vulns field', 1);
+    }
+    return vulns as OsvVulnerability[];
   });
+}
+
+/** The wire shape osv.dev expects; OsvQuery is the engine's flat internal form. */
+interface OsvWireQuery {
+  readonly package: { readonly name: string; readonly ecosystem: string };
+  readonly version: string;
+}
+
+function toWireQuery(query: OsvQuery): OsvWireQuery {
+  return {
+    package: { name: query.name, ecosystem: query.ecosystem },
+    version: query.version,
+  };
 }
 
 /**
@@ -137,7 +175,7 @@ export function createOsvHttp(options: OsvHttpOptions = {}): OsvHttp {
       response = await doFetch(endpoint, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ queries }),
+        body: JSON.stringify({ queries: queries.map(toWireQuery) }),
         signal: combinedSignal(timeoutMs, callerSignal),
       });
     } catch (error) {
