@@ -10,7 +10,7 @@ import {
   statSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { extname, join, normalize, resolve, sep } from 'node:path';
+import { extname, join, normalize, posix, resolve, sep } from 'node:path';
 
 import {
   analyzeProject,
@@ -650,11 +650,13 @@ function safePathname(rawUrl: string): string | null {
   if (/[\\\u0000-\u001f]/u.test(decoded)) {
     return null;
   }
-  const normalized = normalize(decoded);
+  // URL paths always use '/', so they must be normalized with POSIX semantics.
+  // node:path's normalize turns '/' into '\' on Windows, which broke every route.
+  const normalized = posix.normalize(decoded);
   if (normalized.includes('..')) {
     return null;
   }
-  return normalized.startsWith(sep) ? normalized : sep + normalized;
+  return normalized.startsWith('/') ? normalized : '/' + normalized;
 }
 
 function isContained(root: string, candidate: string): boolean {
