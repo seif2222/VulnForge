@@ -103,6 +103,13 @@ describe('tui frame invariants', () => {
 });
 
 describe('tui golden frames (ANSI-stripped)', () => {
+  it.each(SIZES)(
+    'overview welcome hero (no report yet) at $width x $height',
+    ({ width, height }) => {
+      const frame = composeFrame(initialModel(ENV), width, height, CAPS, 0);
+      expect(stripAnsi(frame.join('\n'))).toMatchSnapshot();
+    },
+  );
   it.each(SIZES)('overview at $width x $height', ({ width, height }) => {
     const frame = composeFrame(withReport(), width, height, CAPS, 0);
     expect(stripAnsi(frame.join('\n'))).toMatchSnapshot();

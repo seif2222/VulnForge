@@ -215,6 +215,74 @@ function emptyState(model: TuiModel, caps: RenderCapabilities, what: string): st
   return lines;
 }
 
+/** Center one line horizontally by its visible width. */
+function centerLine(line: string, width: number): string {
+  const pad = Math.max(0, Math.floor((width - visibleLength(line)) / 2));
+  return ' '.repeat(pad) + line;
+}
+
+function keyHint(caps: RenderCapabilities, key: string, action: string): string {
+  return `${fg(caps, TUI_COLORS.accent, key)}  ${dim(caps, action)}`;
+}
+
+/**
+ * The Overview welcome hero (approved G3 identity): Forge front and center, the
+ * intro greeting, and the way forward. Shown only before the first report exists.
+ */
+function welcomeLines(
+  model: TuiModel,
+  width: number,
+  height: number,
+  caps: RenderCapabilities,
+  t: number,
+): string[] {
+  const robotWidth = Math.min(width - 8, 60);
+  const robotHeight = Math.min(Math.max(8, Math.floor((height - 10) * 0.6)), 16);
+  let robot = forgeFrame(orbFor(model), robotWidth, robotHeight, caps, t);
+  // The robot's true row count varies with its art; shrink until the block fits.
+  const chrome = 8; // greeting, spacing, three key hints, the open-report line
+  for (
+    let candidate = robotHeight - 2;
+    robot.length + chrome > height && candidate >= 2;
+    candidate -= 2
+  ) {
+    robot = forgeFrame(orbFor(model), robotWidth, candidate, caps, t);
+  }
+
+  const block: string[] = [];
+  block.push(
+    centerLine(bold(caps, fg(caps, TUI_COLORS.accent, "Hello, I'm Forge. Let's start.")), width),
+  );
+  block.push('');
+  for (const row of robot) {
+    block.push(centerLine(row, width));
+  }
+  block.push('');
+  const hints = [
+    keyHint(caps, 's', 'scan a project by its path'),
+    keyHint(caps, '1-8', 'switch between the views'),
+    keyHint(caps, 'l', 'follow the scan live'),
+  ];
+  const hintsWidth = Math.max(...hints.map((hint) => visibleLength(hint)));
+  for (const hint of hints) {
+    block.push(centerLine(padLine(hint, hintsWidth), width));
+  }
+  block.push('');
+  block.push(centerLine(dim(caps, 'open an existing report:  vulnforge ui <report.json>'), width));
+  if (model.scan.state === 'error' && model.scan.errorMessage !== null) {
+    block.push('');
+    block.push(
+      centerLine(
+        fg(caps, TUI_COLORS.severityCritical, `last scan error: ${model.scan.errorMessage}`),
+        width,
+      ),
+    );
+  }
+
+  const topPad = Math.max(0, Math.floor((height - block.length) / 2));
+  return [...Array.from({ length: topPad }, () => ''), ...block];
+}
+
 // ---------------------------------------------------------------- tab 1: overview
 
 function overviewLines(
@@ -225,7 +293,7 @@ function overviewLines(
   t: number,
 ): string[] {
   if (model.report === null) {
-    return emptyState(model, caps, 'Overview');
+    return welcomeLines(model, width, height, caps, t);
   }
   const overview = buildOverviewModel(model.report);
   const robotColumn = width >= 100;

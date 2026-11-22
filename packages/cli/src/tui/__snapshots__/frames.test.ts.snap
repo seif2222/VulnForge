@@ -237,6 +237,111 @@ exports[`tui golden frames (ANSI-stripped) > overview at 142 x 42 1`] = `
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                                                                    "
 `;
 
+exports[`tui golden frames (ANSI-stripped) > overview welcome hero (no report yet) at 80 x 24 1`] = `
+" VF  1 Ov  2 Sc  3 Fi  4 Tr  5 AI  6 Hi  7 Re  8 Se                             
+────────────────────────────────────────────────────────────────────────────────
+                         Hello, I'm Forge. Let's start.                         
+                                                                                
+                                        #                                       
+                                        #                                       
+                                   @@@@@@@@@@%                                  
+                                  #@%.::.::.%%#                                 
+                                  #@%.::.::.%%#                                 
+                                   @%%%%%%%%%%                                  
+                                   %%%%%%%%%%%                                  
+                                                                                
+                                   @#@%...%%@#                                  
+                                   ##@%%%%%%##                                  
+                                                                                
+                                                                                
+                                                                                
+                         s  scan a project by its path                          
+                         1-8  switch between the views                          
+                         l  follow the scan live                                
+                                                                                
+              open an existing report:  vulnforge ui <report.json>              
+────────────────────────────────────────────────────────────────────────────────
+ 1-8 tabs · s scan · l live · c cancel · r rescan · q quit                      "
+`;
+
+exports[`tui golden frames (ANSI-stripped) > overview welcome hero (no report yet) at 100 x 30 1`] = `
+" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                   Hello, I'm Forge. Let's start.                                   
+                                                                                                    
+                                                  #                                                 
+                                                  #                                                 
+                                                  #                                                 
+                                          @@@@@@@@@@@@@@@@%                                         
+                                          @@%%%%%%%%%%%%%%%                                         
+                                         #@@%.:::...:::.%%%#                                        
+                                        ##@@%.:::...:::.%%%##                                       
+                                         #@@%%%%%%%%%%%%%%%#                                        
+                                          @@%%%%%%%%%%%%%%%                                         
+                                          %%%%%%%%%%%%%%%%%                                         
+                                                                                                    
+                                             @@@@@@@@@@%                                            
+                                           @#@@%.....%%%@@                                          
+                                          @@#@@%.....%%%@##                                         
+                                           ##%%%%%%%%%%%##                                          
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                   s  scan a project by its path                                    
+                                   1-8  switch between the views                                    
+                                   l  follow the scan live                                          
+                                                                                                    
+                        open an existing report:  vulnforge ui <report.json>                        
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ 1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
+`;
+
+exports[`tui golden frames (ANSI-stripped) > overview welcome hero (no report yet) at 142 x 42 1`] = `
+" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings                                                    
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                              
+                                                        Hello, I'm Forge. Let's start.                                                        
+                                                                                                                                              
+                                                                       #                                                                      
+                                                                       #                                                                      
+                                                                       #                                                                      
+                                                                       #                                                                      
+                                                           @@@@@@@@@@@@#@@@@@@@@@@@%                                                          
+                                                          @@@%%%%%%%%%%%%%%%%%%%%%%%%                                                         
+                                                          @@@%%%%%%%%%%%%%%%%%%%%%%%%                                                         
+                                                         #@@@%%..::::.....::::..%%%%%#                                                        
+                                                        ##@@@%%..::::.....::::..%%%%%##                                                       
+                                                       ###@@@%%..::::.....::::..%%%%%###                                                      
+                                                        ##@@@%%.................%%%%%##                                                       
+                                                        ##@@@%%%%%%%%%%%%%%%%%%%%%%%%##                                                       
+                                                          @@@%%%%%%%%%%%%%%%%%%%%%%%%                                                         
+                                                          @@%%%%%%%%%%%%%%%%%%%%%%%%%                                                         
+                                                          %%%%%%%%%%%%%%%%%%%%%%%%%%%                                                         
+                                                           %%%%%%%%%%%%%%%%%%%%%%%%%                                                          
+                                                                                                                                              
+                                                               @@@@@@@@@@@@@@@@%                                                              
+                                                            @@ @@@%%%%%%%%%%%%%% @@                                                           
+                                                           @@@#@@@%%...#...%%%%%@@##                                                          
+                                                           @@##@@@%%.......%%%%%@@##                                                          
+                                                           ####@@%%%%%%%%%%%%%%%####                                                          
+                                                            ## %%%%%%%%%%%%%%%%% ##                                                           
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                        s  scan a project by its path                                                         
+                                                        1-8  switch between the views                                                         
+                                                        l  follow the scan live                                                               
+                                                                                                                                              
+                                             open an existing report:  vulnforge ui <report.json>                                             
+                                                                                                                                              
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                                                                    "
+`;
+
 exports[`tui golden frames (ANSI-stripped) > settings at 100x30 1`] = `
 " VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
 ────────────────────────────────────────────────────────────────────────────────────────────────────
