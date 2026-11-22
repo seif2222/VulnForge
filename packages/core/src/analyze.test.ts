@@ -1,4 +1,12 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -248,6 +256,72 @@ describe('analyzeProject pipeline', () => {
     expect(ids).toEqual(['leftpad@1.0.0', 'rightpad@2.1.0']);
     expect(registryCalled).toBe(false);
     expect(result.report.stats.transitivePackages).toBe(1);
+  });
+
+  it('scans a pnpm workspace in one pass and records provenance in meta.workspace', async () => {
+    // The owner's ask: one scan of the workspace root covers every subpackage.
+    const dir = tempDir();
+    writeFileSync(
+      join(dir, 'package.json'),
+      JSON.stringify({ name: 'ws-root', version: '1.0.0', dependencies: { leftpad: '^1.0.0' } }),
+    );
+    mkdirSync(join(dir, 'tools'), { recursive: true });
+    writeFileSync(
+      join(dir, 'tools', 'package.json'),
+      JSON.stringify({ name: 'tools', version: '1.0.0', dependencies: { helper: '^2.0.0' } }),
+    );
+    writeFileSync(
+      join(dir, 'pnpm-lock.yaml'),
+      [
+        "lockfileVersion: '9.0'",
+        '',
+        'importers:',
+        '',
+        '  .:',
+        '    dependencies:',
+        '      leftpad:',
+        '        specifier: ^1.0.0',
+        '        version: 1.0.0',
+        '',
+        '  tools:',
+        '    dependencies:',
+        '      helper:',
+        '        specifier: ^2.0.0',
+        '        version: 2.0.0',
+        '',
+        'packages:',
+        '',
+        "  'leftpad@1.0.0':",
+        '    resolution: {integrity: sha512-AAA==}',
+        '',
+        "  'helper@2.0.0':",
+        '    resolution: {integrity: sha512-BBB==}',
+        '',
+        'snapshots:',
+        '',
+        "  'leftpad@1.0.0': {}",
+        '',
+        "  'helper@2.0.0': {}",
+        '',
+      ].join('\n'),
+    );
+
+    const result = await analyzeProject(
+      { projectDir: dir, toolVersion: '0.0.0-test' },
+      {
+        cache: createMemoryCache(),
+        clock: CLOCK,
+        http: { queryBatch: (queries) => Promise.resolve(queries.map(() => [])) },
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const ids = result.report.packages.map((entry) => `${entry.name}@${entry.version}`);
+    expect(ids).toEqual(['helper@2.0.0', 'leftpad@1.0.0']);
+    expect(result.report.meta.workspace?.scannedManifests).toEqual(['.', 'tools']);
+    expect(result.report.meta.workspace?.directOrigins['helper@2.0.0']).toEqual(['tools']);
+    expect(validateReport(result.report).ok).toBe(true);
   });
 
   it('resolves lockfile-less ranges from the registry and scans them (depscan-copy online)', async () => {

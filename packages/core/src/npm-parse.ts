@@ -3,7 +3,12 @@ import { basename, join } from 'node:path';
 
 import { ProjectParseError } from './errors.js';
 import { packageId, sortPackageEntries } from './package-key.js';
-import type { PackageEntry, UnresolvedReason, UnresolvedRequirement } from './types.js';
+import type {
+  PackageEntry,
+  UnresolvedReason,
+  UnresolvedRequirement,
+  WorkspaceScan,
+} from './types.js';
 
 const MANIFEST_FILE = 'package.json';
 const LOCKFILE = 'package-lock.json';
@@ -22,6 +27,8 @@ export interface NpmProject {
   readonly warnings: readonly string[];
   /** Empty on the lockfile path; non-pinned requirements on the manifest-only path. */
   readonly unresolved: readonly UnresolvedRequirement[];
+  /** Set when several workspace manifests were scanned in one pass (pnpm workspaces). */
+  readonly workspace?: WorkspaceScan;
 }
 
 interface InstalledPackage {

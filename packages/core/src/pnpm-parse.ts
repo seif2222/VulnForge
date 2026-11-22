@@ -4,7 +4,7 @@ import { basename, join } from 'node:path';
 import { ProjectParseError } from './errors.js';
 import type { NpmProject } from './npm-parse.js';
 import { packageId, sortPackageEntries } from './package-key.js';
-import type { PackageEntry } from './types.js';
+import type { PackageEntry, WorkspaceScan } from './types.js';
 import { YamlSubsetError, parseYamlSubset } from './yaml-subset.js';
 
 const MANIFEST_FILE = 'package.json';
@@ -100,8 +100,8 @@ function findSnapshotKey(
   return undefined;
 }
 
-/** Reads the root importer's dependency sections: name -> { ref, isDev }. */
-function rootDependencies(
+/** Reads one importer's dependency sections: name -> { ref, isDev }. */
+function dependenciesOf(
   importer: unknown,
   lockPath: string,
 ): ReadonlyMap<string, { ref: string; isDev: boolean }> {
@@ -121,7 +121,7 @@ function rootDependencies(
       throw new ProjectParseError(
         'malformed-lockfile',
         lockPath,
-        `root importer "${section}" must be an object`,
+        `importer "${section}" must be an object`,
       );
     }
     for (const [name, entry] of Object.entries(raw)) {
@@ -129,7 +129,7 @@ function rootDependencies(
         throw new ProjectParseError(
           'malformed-lockfile',
           lockPath,
-          `root importer "${section}.${name}" must carry a version`,
+          `importer "${section}.${name}" must carry a version`,
         );
       }
       const existing = roots.get(name);
@@ -144,10 +144,12 @@ function rootDependencies(
 }
 
 /**
- * Reads a pnpm project from pnpm-lock.yaml: the full dependency tree of the root
- * importer, with npm-compatible semantics (isDirect, shortest depth, parents,
- * dev-only propagation). Workspace links are skipped with a named warning; other
- * workspace importers are separate packages and are reported, not scanned.
+ * Reads a pnpm project from pnpm-lock.yaml. Every importer in the lockfile is a
+ * workspace manifest and contributes its own dependency tree: packages are merged
+ * by `name@version`, isDirect means direct in any manifest, dev-only is judged
+ * across all paths, and direct-dependency provenance lands in `workspace`.
+ * Workspace links between importers are covered by the target's own manifest and
+ * noted, not followed. Unknown refs are named in warnings, never guessed.
  */
 export function parsePnpm(projectDir: string): NpmProject {
   const manifestPath = join(projectDir, MANIFEST_FILE);
@@ -206,60 +208,101 @@ export function parsePnpm(projectDir: string): NpmProject {
       '"importers" must contain the root importer "."',
     );
   }
+  const importerDirs = Object.keys(rawImporters).sort((a, b) =>
+    a === '.' ? -1 : b === '.' ? 1 : a.localeCompare(b),
+  );
+  const isWorkspace = importerDirs.length > 1;
 
   const warnings: string[] = [];
-  const workspaceImporters = Object.keys(rawImporters)
-    .filter((key) => key !== '.')
-    .sort();
-  if (workspaceImporters.length > 0) {
-    warnings.push(
-      `workspace: ${workspaceImporters.length} other package(s) (${workspaceImporters.join(', ')}) have their own manifests and are not part of this scan`,
-    );
-  }
-
-  const roots = rootDependencies(rawImporters['.'], lockPath);
   const snapshots = indexSnapshots(document['snapshots'], lockPath);
 
   const depthById = new Map<string, number>();
   const parentsById = new Map<string, Set<string>>();
   const devOnlyById = new Map<string, boolean>();
   const directIds = new Set<string>();
+  const directOrigins = new Map<string, Set<string>>();
   const identityOf = new Map<string, string>(); // snapshot key -> package id
 
   interface QueueItem {
     readonly snapshotKey: string;
-    readonly name: string;
-    readonly ref: string;
   }
   const queue: QueueItem[] = [];
   const enqueuedKeys = new Set<string>();
-
-  const enqueue = (item: QueueItem): void => {
-    if (!enqueuedKeys.has(item.snapshotKey)) {
-      enqueuedKeys.add(item.snapshotKey);
-      queue.push(item);
+  const enqueue = (snapshotKey: string): void => {
+    if (!enqueuedKeys.has(snapshotKey)) {
+      enqueuedKeys.add(snapshotKey);
+      queue.push({ snapshotKey });
     }
   };
 
-  for (const [name, root] of [...roots.entries()].sort()) {
-    if (isWorkspaceLink(root.ref)) {
-      warnings.push(`workspace dependency "${name}" (${root.ref}) is a local link, not scanned`);
-      continue;
+  const scannedManifests: string[] = [];
+  for (const importerDir of importerDirs) {
+    // The root manifest was read above; workspace packages read their own.
+    let importerManifest: Record<string, unknown> | null = rawManifest;
+    if (importerDir !== '.') {
+      const subPath = join(projectDir, importerDir, MANIFEST_FILE);
+      if (!existsSync(subPath)) {
+        warnings.push(`workspace package "${importerDir}" has no package.json - skipped`);
+        continue;
+      }
+      try {
+        const parsed: unknown = JSON.parse(readFileSync(subPath, 'utf8'));
+        importerManifest = isRecord(parsed) ? parsed : null;
+      } catch {
+        importerManifest = null;
+      }
+      if (importerManifest === null) {
+        warnings.push(
+          `workspace package "${importerDir}" has an unreadable package.json - skipped`,
+        );
+        continue;
+      }
     }
-    const snapshotKey = findSnapshotKey(snapshots, name, root.ref);
-    if (snapshotKey === undefined) {
-      warnings.push(`"${name}" is in the lockfile importers but has no snapshot entry`);
-      continue;
+    scannedManifests.push(importerDir);
+
+    const roots = dependenciesOf(rawImporters[importerDir], lockPath);
+    for (const [name, root] of [...roots.entries()].sort()) {
+      if (isWorkspaceLink(root.ref)) {
+        warnings.push(
+          `workspace dependency "${name}" (${root.ref}) is scanned via its own manifest`,
+        );
+        continue;
+      }
+      const snapshotKey = findSnapshotKey(snapshots, name, root.ref);
+      if (snapshotKey === undefined) {
+        warnings.push(
+          `"${name}" declared by "${importerDir}" has no snapshot entry in the lockfile`,
+        );
+        continue;
+      }
+      const id = packageId(name, stripPeerSuffix(root.ref));
+      directIds.add(id);
+      const origins = directOrigins.get(id) ?? new Set<string>();
+      origins.add(importerDir);
+      directOrigins.set(id, origins);
+      identityOf.set(snapshotKey, id);
+      const depth = depthById.get(id);
+      if (depth === undefined || depth > 0) {
+        depthById.set(id, 0);
+      }
+      devOnlyById.set(id, (devOnlyById.get(id) ?? true) && root.isDev);
+      enqueue(snapshotKey);
     }
-    const id = packageId(name, stripPeerSuffix(root.ref));
-    directIds.add(id);
-    identityOf.set(snapshotKey, id);
-    const depth = depthById.get(id);
-    if (depth === undefined || depth > 0) {
-      depthById.set(id, 0);
+
+    // Manifest consistency: a declared dependency missing from the lockfile is named.
+    for (const section of ['dependencies', 'devDependencies', 'optionalDependencies'] as const) {
+      const declared = importerManifest[section];
+      if (!isRecord(declared)) {
+        continue;
+      }
+      for (const name of Object.keys(declared)) {
+        if (!roots.has(name)) {
+          warnings.push(
+            `manifest dependency "${name}" of "${importerDir}" is not in the pnpm lockfile`,
+          );
+        }
+      }
     }
-    devOnlyById.set(id, (devOnlyById.get(id) ?? true) && root.isDev);
-    enqueue({ snapshotKey, name, ref: root.ref });
   }
 
   for (let cursor = 0; cursor < queue.length; cursor += 1) {
@@ -298,7 +341,7 @@ export function parsePnpm(projectDir: string): NpmProject {
         depthById.set(childId, parentDepth + 1);
       }
       devOnlyById.set(childId, (devOnlyById.get(childId) ?? true) && parentDevOnly);
-      enqueue({ snapshotKey: childKey, name: childName, ref: childRef });
+      enqueue(childKey);
     }
   }
 
@@ -315,7 +358,7 @@ export function parsePnpm(projectDir: string): NpmProject {
     });
   }
 
-  // Orphans: locked packages no root-reachable path uses.
+  // Orphans: locked packages no scanned manifest's tree uses.
   const orphans: string[] = [];
   const rawPackages = document['packages'];
   if (isRecord(rawPackages)) {
@@ -333,17 +376,19 @@ export function parsePnpm(projectDir: string): NpmProject {
     orphans.sort();
   }
 
-  // Manifest consistency: a declared dependency missing from the lockfile is named.
-  for (const section of ['dependencies', 'devDependencies', 'optionalDependencies'] as const) {
-    const declared = rawManifest[section];
-    if (!isRecord(declared)) {
-      continue;
-    }
-    for (const name of Object.keys(declared)) {
-      if (!roots.has(name)) {
-        warnings.push(`manifest dependency "${name}" is not in the pnpm lockfile`);
-      }
-    }
+  let workspace: WorkspaceScan | undefined;
+  if (isWorkspace) {
+    workspace = {
+      scannedManifests,
+      directOrigins: Object.fromEntries(
+        [...directOrigins.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([id, dirs]) => [id, [...dirs].sort()]),
+      ),
+    };
+    warnings.push(
+      `workspace scan: ${scannedManifests.length} manifests scanned (${scannedManifests.join(', ')})`,
+    );
   }
 
   const manifestName = rawManifest['name'];
@@ -358,6 +403,7 @@ export function parsePnpm(projectDir: string): NpmProject {
     orphans,
     warnings: [...new Set(warnings)].sort(),
     unresolved: [],
+    ...(workspace === undefined ? {} : { workspace }),
   };
 }
 

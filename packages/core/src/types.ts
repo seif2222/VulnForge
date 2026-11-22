@@ -99,6 +99,15 @@ export interface ReportMeta {
   readonly ignored: readonly IgnoredFinding[];
   /** Recoverable problems reported by the parsers. */
   readonly warnings: readonly string[];
+  /** Present when several workspace manifests were scanned in one pass. */
+  readonly workspace?: WorkspaceScan;
+}
+
+export interface WorkspaceScan {
+  /** Manifests that contributed, as workspace-relative importer dirs ('.' is the root). */
+  readonly scannedManifests: readonly string[];
+  /** Direct-dependency provenance: `name@version` -> importer dirs that declare it. */
+  readonly directOrigins: Readonly<Record<string, readonly string[]>>;
 }
 
 export interface PackageEntry {

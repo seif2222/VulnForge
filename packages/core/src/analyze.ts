@@ -20,6 +20,7 @@ import type {
   PackageEntry,
   Report,
   UnresolvedRequirement,
+  WorkspaceScan,
 } from './types.js';
 import { validateReport } from './validate-report.js';
 
@@ -127,6 +128,7 @@ interface ParsedProject {
   readonly packages: readonly PackageEntry[];
   readonly unresolved: readonly UnresolvedRequirement[];
   readonly warnings: readonly string[];
+  readonly workspace?: WorkspaceScan;
 }
 
 function parseProject(projectDir: string, ecosystem: Ecosystem): ParsedProject {
@@ -152,6 +154,7 @@ function parseProject(projectDir: string, ecosystem: Ecosystem): ParsedProject {
     packages: project.packages,
     unresolved: project.unresolved,
     warnings: project.warnings,
+    ...(project.workspace === undefined ? {} : { workspace: project.workspace }),
   };
 }
 
@@ -296,6 +299,7 @@ export async function analyzeProject(
         incomplete,
         ignored,
         warnings: parsed.warnings,
+        ...(parsed.workspace === undefined ? {} : { workspace: parsed.workspace }),
       },
       packages: parsed.packages,
       vulnerabilities: kept,

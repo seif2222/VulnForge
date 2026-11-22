@@ -130,6 +130,28 @@ export const REPORT_SCHEMA: JsonSchema = {
           items: { type: 'string', minLength: 1, maxLength: 512 },
           description: 'Recoverable problems reported by the parsers.',
         },
+        workspace: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['scannedManifests', 'directOrigins'],
+          properties: {
+            scannedManifests: {
+              type: 'array',
+              minItems: 1,
+              items: { type: 'string', minLength: 1, maxLength: 1024 },
+            },
+            directOrigins: {
+              type: 'object',
+              additionalProperties: {
+                type: 'array',
+                minItems: 1,
+                items: { type: 'string', minLength: 1, maxLength: 1024 },
+              },
+            },
+          },
+          description:
+            'Workspace scan provenance: which manifests were scanned and which declared each direct package.',
+        },
       },
     },
 
