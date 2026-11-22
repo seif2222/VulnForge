@@ -30,16 +30,16 @@ export function fg(caps: RenderCapabilities, color: TuiColor, text: string): str
     const r = Number.parseInt(color.hex.slice(1, 3), 16);
     const g = Number.parseInt(color.hex.slice(3, 5), 16);
     const b = Number.parseInt(color.hex.slice(5, 7), 16);
-    return `\u001b[38;2;${r};${g};${b}m${text}\u001b[0m`;
+    return `\u001b[38;2;${r};${g};${b}m${text}\u001b[39m`;
   }
   if (caps.color === '256') {
-    return `\u001b[38;5;${color.xterm256}m${text}\u001b[0m`;
+    return `\u001b[38;5;${color.xterm256}m${text}\u001b[39m`;
   }
-  return `\u001b[${ANSI16_CODES[color.ansi16]}m${text}\u001b[0m`;
+  return `\u001b[${ANSI16_CODES[color.ansi16]}m${text}\u001b[39m`;
 }
 
 export function bold(caps: RenderCapabilities, text: string): string {
-  return caps.color === 'mono' ? text : `\u001b[1m${text}\u001b[0m`;
+  return caps.color === 'mono' ? text : `\u001b[1m${text}\u001b[22m`;
 }
 
 export function dim(caps: RenderCapabilities, text: string): string {
@@ -99,7 +99,7 @@ export function fitLine(text: string, width: number): string {
     }
   }
   if (visibleLength(text) > width) {
-    return out.trimEnd() + '\u001b[0m';
+    return out.trimEnd() + '\u001b[39m\u001b[22m';
   }
   return out;
 }

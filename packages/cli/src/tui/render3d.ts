@@ -332,11 +332,11 @@ export function rasterize(pixels: (string | null)[][], capabilities: RenderCapab
       if (top === null && bottom === null) {
         row += ' ';
       } else if (top !== null && bottom !== null) {
-        row += `${sgr(top, true)}${sgr(bottom, false)}▀\u001b[0m`;
+        row += `${sgr(top, true)}${sgr(bottom, false)}▀\u001b[39m\u001b[49m`;
       } else if (top !== null) {
-        row += `${sgr(top, true)}▀\u001b[0m`;
+        row += `${sgr(top, true)}▀\u001b[39m\u001b[49m`;
       } else if (bottom !== null) {
-        row += `${sgr(bottom, true)}▄\u001b[0m`;
+        row += `${sgr(bottom, true)}▄\u001b[39m\u001b[49m`;
       } else {
         row += ' ';
       }
@@ -389,7 +389,7 @@ export function scanConstellationFrame(
   };
 
   const [ar, ag, ab] = hexToRgb(TUI_COLORS.accent.hex);
-  const litGlyph = `\u001b[38;2;${ar};${ag};${ab}m●\u001b[0m`;
+  const litGlyph = `\u001b[38;2;${ar};${ag};${ab}m●\u001b[39m\u001b[49m`;
 
   nodes.forEach((node, index) => {
     const angle = spin + (index / nodes.length) * 2 * Math.PI;

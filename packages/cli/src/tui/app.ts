@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { analyzeProject, createFileCache, validateReport, type Report } from '@vulnforge/core';
 import { loadForgeConfig } from '@vulnforge/forge';
 
-import { TUI_FRAME_MS } from '../colors.generated.js';
+import { TUI_COLORS, TUI_FRAME_MS } from '../colors.generated.js';
 import { EXIT_CODES } from '../exit-codes.js';
 import type { CliDeps, CliIo } from '../run.js';
 import { composeFrame } from './frames.js';
@@ -18,6 +18,22 @@ import {
   type TuiModel,
 } from './model.js';
 import type { RenderCapabilities } from './render3d.js';
+import { padLine } from './theme.js';
+
+/** SGR that paints the theme background, for terminals that can show it. */
+function backgroundSequence(caps: RenderCapabilities): string {
+  if (caps.color === 'truecolor') {
+    const hex = TUI_COLORS.bgBase.hex;
+    const r = Number.parseInt(hex.slice(1, 3), 16);
+    const g = Number.parseInt(hex.slice(3, 5), 16);
+    const b = Number.parseInt(hex.slice(5, 7), 16);
+    return `\u001b[48;2;${r};${g};${b}m`;
+  }
+  if (caps.color === '256') {
+    return `\u001b[48;5;${TUI_COLORS.bgBase.xterm256}m`;
+  }
+  return '';
+}
 
 const MANIFESTS: readonly { readonly file: string; readonly ecosystem: string }[] = [
   { file: 'package-lock.json', ecosystem: 'npm' },
@@ -29,15 +45,34 @@ function capabilitiesFor(io: CliIo, env: NodeJS.ProcessEnv): RenderCapabilities 
   const noColor =
     (env.NO_COLOR !== undefined && env.NO_COLOR !== '') ||
     (io.env.VULNFORGE_NO_COLOR !== undefined && io.env.VULNFORGE_NO_COLOR !== '');
+  // FORCE_COLOR is the explicit override: 0 mono, 1 ansi16, 2 xterm-256, 3 truecolor.
+  const force = env.FORCE_COLOR ?? '';
+  const forced =
+    force === '0' || force === 'false'
+      ? ('mono' as const)
+      : force === '1'
+        ? ('16' as const)
+        : force === '2'
+          ? ('256' as const)
+          : force === '3' || force === 'true'
+            ? ('truecolor' as const)
+            : null;
   const colorTerm = env.COLORTERM ?? '';
   const term = env.TERM ?? '';
+  const termProgram = env.TERM_PROGRAM ?? '';
+  // Windows Terminal and the modern editors set no TERM/COLORTERM in PowerShell;
+  // their session markers are the only reliable truecolor signal there.
+  const modernHost =
+    env.WT_SESSION !== undefined ||
+    ['vscode', 'WezTerm', 'iTerm.app', 'kitty', 'Alacritty', 'ghostty'].includes(termProgram);
   const color = noColor
     ? 'mono'
-    : colorTerm === 'truecolor' || colorTerm === '24bit'
-      ? 'truecolor'
-      : term.includes('256color')
-        ? '256'
-        : '16';
+    : (forced ??
+      (colorTerm === 'truecolor' || colorTerm === '24bit' || modernHost
+        ? 'truecolor'
+        : term.includes('256color')
+          ? '256'
+          : '16'));
   const locale = `${env.LC_ALL ?? ''}${env.LC_CTYPE ?? ''}${env.LANG ?? ''}`;
   const unicode = !env.VULNFORGE_ASCII && locale.toLowerCase().includes('utf');
   return { color, unicode };
@@ -160,6 +195,7 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
   }
 
   const caps = capabilitiesFor(io, process.env);
+  const bg = backgroundSequence(caps);
   const animate = animationsEnabled(io);
   let model: TuiModel = initialModel(envFacts(io, deps));
 
@@ -198,7 +234,15 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
   const paint = (): void => {
     const { width, height } = size();
     const frame = composeFrame(model, width, height, caps, animate ? tick : 0);
-    io.stdout(`\u001b[H${frame.join('\r\n')}`);
+    if (bg === '') {
+      io.stdout(`\u001b[H${frame.join('\r\n')}`);
+      return;
+    }
+    // Every line padded to full width over an active bg SGR paints the whole
+    // screen in the theme base; fg()/bold() only reset fg and weight, so the
+    // background survives to the line edge.
+    const body = frame.map((line) => padLine(line, width)).join('\r\n');
+    io.stdout(`\u001b[H${bg}${body}\u001b[0m`);
   };
 
   const apply = (effects: readonly TuiEffect[]): void => {
@@ -281,7 +325,7 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
   };
 
   // Enter the alternate screen and raw mode.
-  io.stdout('\u001b[?1049h\u001b[?25l');
+  io.stdout(bg === '' ? '\u001b[?1049h\u001b[?25l' : `\u001b[?1049h\u001b[?25l${bg}\u001b[2J`);
   if (stdin.setRawMode !== undefined) {
     stdin.setRawMode(true);
   }

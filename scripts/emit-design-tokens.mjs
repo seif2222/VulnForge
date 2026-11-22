@@ -62,12 +62,21 @@ const ANSI_16 = [
   ['brightWhite', [255, 255, 255]],
 ];
 
-/** Nearest basic 16-color name. */
+/**
+ * Nearest basic 16-color name. Raw RGB distance maps greys to magenta, so
+ * near-neutral colors only ever map to the neutral ramp (never a hue).
+ */
 function to16(hex) {
   const [r, g, b] = rgb(hex);
+  const max = Math.max(r, g, b);
+  const saturation = max === 0 ? 0 : (max - Math.min(r, g, b)) / max;
+  const candidates =
+    saturation < 0.25
+      ? ANSI_16.filter(([name]) => ['black', 'brightBlack', 'white', 'brightWhite'].includes(name))
+      : ANSI_16;
   let best = 'white';
   let bestDist = Infinity;
-  for (const [name, [cr, cg, cb]] of ANSI_16) {
+  for (const [name, [cr, cg, cb]] of candidates) {
     const d = (cr - r) ** 2 + (cg - g) ** 2 + (cb - b) ** 2;
     if (d < bestDist) {
       bestDist = d;

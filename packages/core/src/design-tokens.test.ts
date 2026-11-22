@@ -54,9 +54,9 @@ describe('design tokens: golden pins (literal values, no imports from the source
     expect(tui).toContain(
       "severityMedium: { hex: '#e8c352', xterm256: 222, ansi16: 'brightYellow' }",
     );
-    expect(tui).toContain(
-      "severityLow: { hex: '#8fa3ad', xterm256: 247, ansi16: 'brightMagenta' }",
-    );
+    expect(tui).toContain("severityLow: { hex: '#8fa3ad', xterm256: 247, ansi16: 'brightBlack' }");
+    // Greys must never map to a hue (the old Euclidean mapping made them magenta).
+    expect(tui).toContain("textSecondary: { hex: '#94aeb6', xterm256: 248, ansi16: 'white' }");
     expect(tui).toContain("accent: { hex: '#f59e7b', xterm256: 216, ansi16: 'brightRed' }");
   });
 
