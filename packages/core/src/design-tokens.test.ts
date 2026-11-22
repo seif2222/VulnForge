@@ -37,11 +37,11 @@ describe('design tokens: freshness of generated files', () => {
 describe('design tokens: golden pins (literal values, no imports from the source)', () => {
   it('pins the accent, severity ramp and success hexes in the generated CSS', () => {
     const css = readFileSync(GENERATED_CSS_PATH, 'utf8');
-    expect(css).toContain('--vf-accent: #5ec8e3;');
+    expect(css).toContain('--vf-accent: #f59e7b;');
     expect(css).toContain('--vf-severity-critical: #ff6b6b;');
-    expect(css).toContain('--vf-severity-high: #f79756;');
+    expect(css).toContain('--vf-severity-high: #e8743b;');
     expect(css).toContain('--vf-severity-medium: #e8c352;');
-    expect(css).toContain('--vf-severity-low: #8b98a9;');
+    expect(css).toContain('--vf-severity-low: #8fa3ad;');
     expect(css).toContain('--vf-success: #4ec9a6;');
   });
 
@@ -50,12 +50,14 @@ describe('design tokens: golden pins (literal values, no imports from the source
     expect(tui).toContain(
       "severityCritical: { hex: '#ff6b6b', xterm256: 210, ansi16: 'brightRed' }",
     );
-    expect(tui).toContain("severityHigh: { hex: '#f79756', xterm256: 216, ansi16: 'brightRed' }");
+    expect(tui).toContain("severityHigh: { hex: '#e8743b', xterm256: 209, ansi16: 'brightRed' }");
     expect(tui).toContain(
       "severityMedium: { hex: '#e8c352', xterm256: 222, ansi16: 'brightYellow' }",
     );
-    expect(tui).toContain("severityLow: { hex: '#8b98a9', xterm256: 247, ansi16: 'brightBlack' }");
-    expect(tui).toContain("accent: { hex: '#5ec8e3', xterm256: 116, ansi16: 'brightCyan' }");
+    expect(tui).toContain(
+      "severityLow: { hex: '#8fa3ad', xterm256: 247, ansi16: 'brightMagenta' }",
+    );
+    expect(tui).toContain("accent: { hex: '#f59e7b', xterm256: 216, ansi16: 'brightRed' }");
   });
 
   it('generated files carry the do-not-edit header naming the source', () => {

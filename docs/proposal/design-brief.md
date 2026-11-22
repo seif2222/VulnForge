@@ -13,33 +13,38 @@ readable. Dark-first, one theme. The signature element is **Forge**, the 3D
 agent character: a small rounded robot, taken from the owner's own reference
 image (revision 1 of this gate: he rejected the original lens-and-ring concept
 and chose this robot). Glossy white shell, dark visor face with two cyan
-striped eye bars, a short antenna with a blue ball tip, blue side ears, and a
-small body with a chest screen. The white shell against the dark theme plus
-the glowing cyan visor give it a silhouette no other element has. Forge is
+striped eye bars, a short antenna with a ball tip, side ears, and a small
+body with a chest screen. In the product the eyes, ears, antenna ball and
+chest mark render in the accent (Soft Peach), the shell in Ice White against
+the deep-teal dark theme, giving Forge a silhouette no other element has. Forge is
 present on both surfaces: it wanders the dashboard (a live animated presence,
 never a static icon) and renders in the terminal through the software 3D
 renderer.
 
 ## 2. Palette (all values from the token source)
 
+Owner-chosen base palette: **Deep Teal #0F3D47** (structure/brand), **Ice
+White #F4F8F9** (primary text), **Soft Peach #F59E7B** (accent/highlights).
+Backgrounds and borders are darkened teal steps of the brand hue.
+
 | Role           | Hex                     | Use                                    |
 | -------------- | ----------------------- | -------------------------------------- |
-| bg-base        | #0b0f14                 | app background                         |
-| bg-raised      | #11161d                 | cards, panels                          |
-| bg-overlay     | #171e27                 | popovers, hover states                 |
-| border-subtle  | #212b36                 | card edges, dividers                   |
-| border-strong  | #32404f                 | focus rings, active edges              |
-| text-primary   | #e6edf3                 | everything primary                     |
-| text-secondary | #9aa7b4                 | metadata, labels                       |
-| text-disabled  | #5b6773                 | disabled only (WCAG-exempt)            |
-| accent         | #5ec8e3                 | one accent: links, active, progress    |
-| accent-strong  | #8fdcf0                 | accent hover/emphasis                  |
-| accent-on      | #06222c                 | text on accent fills                   |
-| accent-tint    | #123240                 | accent-tinted fills                    |
-| critical       | #ff6b6b on tint #3d1a1e | severity badge                         |
-| high           | #f79756 on tint #3a2517 | severity badge                         |
-| medium         | #e8c352 on tint #37301a | severity badge                         |
-| low            | #8b98a9 on tint #232a33 | severity badge — slate, never green    |
+| bg-base        | #07181d                 | app background                         |
+| bg-raised      | #0c242c                 | cards, panels                          |
+| bg-overlay     | #11313b                 | popovers, hover states                 |
+| border-subtle  | #1d4a57                 | card edges, dividers                   |
+| border-strong  | #2f6675                 | focus rings, active edges              |
+| text-primary   | #f4f8f9                 | everything primary                     |
+| text-secondary | #94aeb6                 | metadata, labels                       |
+| text-disabled  | #54707a                 | disabled only (WCAG-exempt)            |
+| accent         | #f59e7b                 | one accent: links, active, progress    |
+| accent-strong  | #fbc3a6                 | accent hover/emphasis                  |
+| accent-on      | #0f3d47                 | text on accent fills                   |
+| accent-tint    | #38271e                 | accent-tinted fills                    |
+| critical       | #ff6b6b on tint #3e1a1e | severity badge                         |
+| high           | #e8743b on tint #37251b | severity badge                         |
+| medium         | #e8c352 on tint #33301d | severity badge                         |
+| low            | #8fa3ad on tint #1e282e | severity badge — slate, never green    |
 | success        | #4ec9a6                 | clean scan, gate pass — the ONLY green |
 
 ## 3. Measured contrast (WCAG 2.x ratios, computed from the tokens)

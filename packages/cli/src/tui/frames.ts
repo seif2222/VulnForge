@@ -449,7 +449,7 @@ function startScanLines(
         fg(
           caps,
           TUI_COLORS.severityMedium,
-          '  ! no package-lock.json: only exact pins resolve - ranges will be skipped (run npm install for a full scan)',
+          '  ! no package-lock.json: only exact pins resolve - run npm install for a full scan',
         ),
       );
     } else if (pf.lockfile === 'pnpm-lock.yaml') {
@@ -457,7 +457,7 @@ function startScanLines(
         fg(
           caps,
           TUI_COLORS.severityMedium,
-          '  ! pnpm-lock.yaml is not readable yet: run npm install --package-lock-only for a full scan',
+          '  ! pnpm-lock.yaml is not readable yet - run npm install --package-lock-only first',
         ),
       );
     }

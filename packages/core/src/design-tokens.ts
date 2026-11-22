@@ -7,6 +7,11 @@
  * precise security operations workspace. Dark-first. One accent. Severity is
  * always badge + glyph + text, never color alone; low severity is slate, never
  * "ok green".
+ *
+ * Palette (chosen by the project owner, 2026-11-22): Deep Teal #0F3D47 (structure/brand),
+ * Ice White #F4F8F9 (primary text), Soft Peach #F59E7B (accent/highlights).
+ * Backgrounds and borders are darkened teal steps so the brand reads even
+ * where #0F3D47 itself would be too dark to notice.
  */
 
 export interface DesignTokens {
@@ -85,37 +90,38 @@ export interface DesignTokens {
 export const DESIGN_TOKENS: DesignTokens = {
   color: {
     bg: {
-      base: '#0b0f14',
-      raised: '#11161d',
-      overlay: '#171e27',
+      base: '#07181d',
+      raised: '#0c242c',
+      overlay: '#11313b',
     },
     border: {
-      subtle: '#212b36',
-      strong: '#32404f',
+      subtle: '#1d4a57',
+      strong: '#2f6675',
     },
     text: {
-      primary: '#e6edf3',
-      secondary: '#9aa7b4',
-      disabled: '#5b6773',
-      inverse: '#0b0f14',
+      primary: '#f4f8f9',
+      secondary: '#94aeb6',
+      disabled: '#54707a',
+      inverse: '#0f3d47',
     },
     accent: {
-      default: '#5ec8e3',
-      strong: '#8fdcf0',
-      onAccent: '#06222c',
-      tint: '#123240',
+      default: '#f59e7b',
+      strong: '#fbc3a6',
+      onAccent: '#0f3d47',
+      tint: '#38271e',
     },
     severity: {
       critical: '#ff6b6b',
-      high: '#f79756',
+      // burnt orange: stays clearly distinct from the peach accent
+      high: '#e8743b',
       medium: '#e8c352',
       // low is slate: informational, never "ok green"
-      low: '#8b98a9',
+      low: '#8fa3ad',
       tint: {
-        critical: '#3d1a1e',
-        high: '#3a2517',
-        medium: '#37301a',
-        low: '#232a33',
+        critical: '#3e1a1e',
+        high: '#37251b',
+        medium: '#33301d',
+        low: '#1e282e',
       },
     },
     success: '#4ec9a6',
