@@ -122,6 +122,33 @@ describe('parseNpm against the fixture projects', () => {
 });
 
 describe('parseNpm lockfile handling', () => {
+  it('keeps scoped package ids intact as parents (depscan regression)', () => {
+    // Real shape from the owner's depscan repo: @typescript-eslint/parser requires
+    // @typescript-eslint/types, so a scoped id lands in parents.
+    const dir = createTempProject({
+      'package.json': JSON.stringify({
+        name: 'fixture-temp',
+        dependencies: { '@typescript-eslint/parser': '8.0.0' },
+      }),
+      'package-lock.json': lock({
+        '': { name: 'fixture-temp', dependencies: { '@typescript-eslint/parser': '8.0.0' } },
+        'node_modules/@typescript-eslint/parser': {
+          version: '8.0.0',
+          dependencies: { '@typescript-eslint/types': '8.0.0', debug: '4.3.4' },
+        },
+        'node_modules/@typescript-eslint/types': { version: '8.0.0' },
+        'node_modules/debug': { version: '4.3.4', dependencies: { ms: '2.1.2' } },
+        'node_modules/ms': { version: '2.1.2' },
+      }),
+    });
+
+    const project = parseNpm(dir);
+    const types = project.packages.find((entry) => entry.name === '@typescript-eslint/types');
+    expect(types?.parents).toEqual(['@typescript-eslint/parser@8.0.0']);
+    const debug = project.packages.find((entry) => entry.name === 'debug');
+    expect(debug?.parents).toEqual(['@typescript-eslint/parser@8.0.0']);
+  });
+
   it('supports lockfileVersion 2 and ignores the legacy dependencies section', () => {
     const dir = createTempProject({
       'package.json': MANIFEST,

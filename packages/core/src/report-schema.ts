@@ -14,8 +14,8 @@ const SOURCE_PATTERN = '^[a-z0-9]+([.-][a-z0-9]+)*$';
 /** Package and project names are opaque: whitespace-free and length-bounded only. */
 const NAME_PATTERN = '^\\S+$';
 
-/** `name@version` of an installed package, e.g. `express@4.18.2`. */
-const PARENT_REF_PATTERN = '^[^@\\s]+@[^@\\s]+$';
+/** `name@version` of an installed package, e.g. `express@4.18.2` or `@eslint/js@9.13.0`. */
+const PARENT_REF_PATTERN = '^(?:@[^@\\s/]+/)?[^@\\s]+@[^@\\s]+$';
 
 const ADVISORY_URL_PATTERN = '^https://\\S+$';
 
@@ -30,7 +30,7 @@ const CVE_OR_GHSA_PATTERN = '^(CVE-[0-9]{4}-[0-9]{4,}|GHSA-[a-z0-9]{4}-[a-z0-9]{
 
 /** `<id>|<package>@<installedVersion>` — the stable identity of a finding. */
 const FINDING_KEY_PATTERN =
-  '^(CVE-[0-9]{4}-[0-9]{4,}|GHSA-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4})\\|[^@\\s|]+@[^@\\s|]+$';
+  '^(CVE-[0-9]{4}-[0-9]{4,}|GHSA-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4})\\|(?:@[^@\\s/|]+/)?[^@\\s|]+@[^@\\s|]+$';
 
 /** JSON Schema for report.json, draft 2020-12. Mirrors the types in `./types.ts`. */
 export const REPORT_SCHEMA: JsonSchema = {

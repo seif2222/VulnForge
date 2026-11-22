@@ -92,6 +92,28 @@ describe('validateReport invariants', () => {
     expect(issuesFor(report)).toEqual([]);
   });
 
+  it('accepts scoped package ids in parents, package refs and finding keys (depscan regression)', () => {
+    // Scoped ids like @typescript-eslint/parser@8.0.0 are legitimate name@version
+    // refs; the old pattern rejected them and failed real-world scans.
+    const report = draftReport('with-vulnerabilities');
+    const renameStrings = (value: unknown): void => {
+      if (typeof value !== 'object' || value === null) {
+        return;
+      }
+      for (const [key, entry] of Object.entries(value)) {
+        if (typeof entry === 'string') {
+          (value as Record<string, unknown>)[key] = entry
+            .replaceAll('PyYAML@5.3.1', '@scope/PyYAML@5.3.1')
+            .replace(/^PyYAML$/, '@scope/PyYAML');
+        } else {
+          renameStrings(entry);
+        }
+      }
+    };
+    renameStrings(report);
+    expect(issuesFor(report)).toEqual([]);
+  });
+
   it('rejects a risk entry for a vulnerability that does not exist', () => {
     const report = draftReport('with-vulnerabilities');
     setProp(report.risk[0], 'findingKey', 'CVE-1999-00001|PyYAML@5.3.1');

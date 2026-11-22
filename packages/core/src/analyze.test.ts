@@ -153,6 +153,54 @@ describe('analyzeProject pipeline', () => {
     }
   });
 
+  it('produces a valid report for scoped packages (depscan regression: scoped parents)', async () => {
+    // The owner's real depscan scan failed validation: parents like
+    // "@typescript-eslint/parser@8.0.0" did not match the old unscoped pattern.
+    const dir = tempDir();
+    writeFileSync(
+      join(dir, 'package.json'),
+      JSON.stringify({
+        name: 'scoped-temp',
+        version: '1.0.0',
+        dependencies: { '@typescript-eslint/parser': '8.0.0' },
+      }),
+    );
+    writeFileSync(
+      join(dir, 'package-lock.json'),
+      JSON.stringify({
+        name: 'scoped-temp',
+        version: '1.0.0',
+        lockfileVersion: 3,
+        requires: true,
+        packages: {
+          '': {
+            name: 'scoped-temp',
+            version: '1.0.0',
+            dependencies: { '@typescript-eslint/parser': '8.0.0' },
+          },
+          'node_modules/@typescript-eslint/parser': {
+            version: '8.0.0',
+            dependencies: { '@typescript-eslint/types': '8.0.0', debug: '4.3.4' },
+          },
+          'node_modules/@typescript-eslint/types': { version: '8.0.0' },
+          'node_modules/debug': { version: '4.3.4', dependencies: { ms: '2.1.2' } },
+          'node_modules/ms': { version: '2.1.2' },
+        },
+      }),
+    );
+
+    const result = await analyzeProject(
+      { projectDir: dir, toolVersion: '0.0.0-test', offline: true },
+      { cache: createMemoryCache(), clock: CLOCK },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(validateReport(result.report).ok).toBe(true);
+    const types = result.report.packages.find((entry) => entry.name === '@typescript-eslint/types');
+    expect(types?.parents).toEqual(['@typescript-eslint/parser@8.0.0']);
+  });
+
   it('marks packages incomplete in offline mode when the cache has no answer', async () => {
     const recordings = loadOsvRecordings();
 
