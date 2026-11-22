@@ -25,9 +25,11 @@ Scope: spec section 5.2 design gate + section 6 binding rules. **STOP point: no 
 ### Software 3D renderer (TUI prototype, real code)
 
 - `packages/cli/src/tui/render3d.ts` — pure frame functions
-  `(state, width, height, capabilities, t) -> string[]`:
-  - `forgeFrame` — the Forge character: squashed lens sphere + equatorial ring + two
-    pupils, Lambert shading, z-buffer, half-block raster in truecolor, ASCII luminance
+  `(state, width, height, capabilities, t) -> string[]` (see Revision 1 below:
+  this section's original lens+ring renderer was replaced):
+  - `forgeFrame` — the Forge robot (SDF raymarched: rounded-box head and body,
+    dark visor with striped cyan eyes, antenna, blue ears, chest screen),
+    two-tone toon shading, half-block raster in truecolor, ASCII luminance
     ramp fallback for mono/no-unicode terminals.
   - `scanConstellationFrame` — Live Monitor visual: package nodes light as OSV queries
     complete (cell-grid raster so styled glyphs never corrupt labels).
@@ -35,9 +37,11 @@ Scope: spec section 5.2 design gate + section 6 binding rules. **STOP point: no 
 - `packages/cli/src/tui/render3d.test.ts` — 5 tests: determinism at fixed t (inline
   snapshot), mono ASCII fallback content, truecolor ANSI output, all six states render,
   constellation lit/unlit nodes.
-- Bugs found and fixed while testing: inverted z-buffer initial value (sphere body
+- Bugs found and fixed while testing: inverted z-buffer initial value (model body
   never wrote), key light on the wrong hemisphere (visible face fully dark), constellation
-  string-splice corrupting ANSI sequences, label clipping at the right edge.
+  string-splice corrupting ANSI sequences, label clipping at the right edge,
+  upside-down projection (world +y mapped to terminal +row), parametric
+  superellipsoid sampling gaps (solved by moving to SDF raymarching).
 
 ### Prototypes (generated, not hand-drawn)
 
@@ -84,8 +88,38 @@ Scope: spec section 5.2 design gate + section 6 binding rules. **STOP point: no 
 - The dashboard Forge lens is a CSS approximation for preview; the canonical render
   is `render3d.ts`.
 
+## Revision 1 (2026-11-22, same gate)
+
+Owner feedback on the first G3 package: the lens-and-ring Forge concept was
+rejected; he supplied his own reference image (a rounded white glossy robot
+with blue glow, dark visor with cyan striped eyes, antenna with a blue ball,
+blue side ears, small body) and required Forge to (a) move around the
+dashboard as a live animated presence, (b) appear in the terminal, and
+(c) have a dedicated scanning animation.
+
+Changes made in response:
+
+- `packages/cli/src/tui/render3d.ts` rewritten: the parametric-sampling
+  sphere renderer became an SDF raymarcher (rounded-box head/body, ellipsoid
+  ears/arms, cylinder antenna; exact pixel coverage, no sampling gaps, still
+  pure frame functions). Two-tone toon shading replaces smooth Lambert (flat
+  regions survive low terminal resolutions). States keep their motion
+  vocabulary: IDLE bob+sway, SCANNING rotation with scrolling eye stripes and
+  antenna wiggle, ANALYZING counter-sway with head tilt, DETECTED micro-shake
+  with severity-colored eyes, COMPLETED bounce, ERROR shiver.
+- Dashboard prototypes: the CSS lens became an animated CSS robot (same
+  identity); the Overview copy shows the 12 s wander loop and the Live
+  Monitor shows the scanning loop (stripes scroll, head pulse), both disabled
+  under prefers-reduced-motion.
+- `docs/proposal/design-brief.md` section 1 (identity), the state sheet, the
+  terminal renderer paragraph and a revision log updated. Palette, tokens,
+  screens, contrast, glyphs unchanged.
+- Prototype frames re-rendered from the new renderer; screenshots retaken.
+
+Everything else in this report (tokens, hex-audit, screens, limits) stands.
+
 ## Gate
 
-Owner approval needed on: Forge identity (lens + ring + pupils), palette, glyphs,
-typography, and the two screen directions shown in the prototypes. On approval, G4
+Owner approval needed on: the Forge robot identity (his own reference, as rendered by the new
+renderer), palette, glyphs, typography, and the two screen directions shown in the prototypes. On approval, G4
 (dashboard) and G5 (TUI wiring) proceed per the spec.

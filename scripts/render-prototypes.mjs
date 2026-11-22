@@ -35,7 +35,7 @@ const DIM = '\u001b[2m';
 const BOLD = '\u001b[1m';
 
 function overviewFrame() {
-  const forge = forgeFrame('IDLE', 24, 10, TRUECOLOR, 1.2);
+  const forge = forgeFrame('IDLE', 34, 15, TRUECOLOR, 1.2);
   const lines = [`${BOLD}VulnForge${RESET}  ${DIM}v0.0.0 · schema v6${RESET}`, RULE, ''];
   const side = [
     `${BOLD}Scan complete${RESET}  vulnerable-npm`,
@@ -60,7 +60,7 @@ function overviewFrame() {
 function liveMonitorFrame() {
   const nodes = pkgs.map((name, i) => ({ name, lit: i < 2 }));
   const constellation = scanConstellationFrame(nodes, 44, 9, TRUECOLOR, 0.4);
-  const forge = forgeFrame('SCANNING', 24, 9, TRUECOLOR, 2.1);
+  const forge = forgeFrame('SCANNING', 34, 13, TRUECOLOR, 0.25);
   const lines = [`${BOLD}Live Monitor${RESET}  ${DIM}scanning vulnerable-npm${RESET}`, RULE];
   const right = [
     `${BOLD}OSV queries${RESET}  2/3 done`,
@@ -79,19 +79,19 @@ function liveMonitorFrame() {
 
 function statesStrip(caps) {
   const states = ['IDLE', 'SCANNING', 'ANALYZING', 'DETECTED', 'COMPLETED', 'ERROR'];
-  const frames = states.map((s) => forgeFrame(s, 16, 8, caps, 1.0));
+  const frames = states.map((s) => forgeFrame(s, 20, 10, caps, 1.0));
   const lines = [];
-  for (let row = 0; row < 8; row += 1) {
+  for (let row = 0; row < 10; row += 1) {
     lines.push(frames.map((f) => f[row]).join('  '));
   }
-  lines.push(states.map((s) => s.padEnd(16)).join('  '));
+  lines.push(states.map((s) => s.padEnd(20)).join('  '));
   return lines.join('\n');
 }
 
 const monoOverview = [
   `${BOLD}mono fallback (no unicode, no color)${RESET}`,
   RULE,
-  ...forgeFrame('IDLE', 30, 10, MONO, 1.2),
+  ...forgeFrame('IDLE', 34, 14, MONO, 1.2),
 ].join('\n');
 
 const files = {

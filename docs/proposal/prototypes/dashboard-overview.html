@@ -112,35 +112,181 @@
         gap: var(--vf-space-md);
         align-items: center;
       }
-      .forge .lens {
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        background: radial-gradient(
-          circle at 35% 30%,
-          var(--vf-accent-strong),
-          var(--vf-accent) 55%,
-          var(--vf-accent-tint)
-        );
+      /* Forge robot - matches the owner's reference: glossy white shell,
+         dark visor with cyan striped eyes, antenna with blue ball, blue ears. */
+      .forgebot {
         position: relative;
+        width: 96px;
+        height: 128px;
+        flex: none;
       }
-      .forge .lens::after {
+      .forgebot .antenna {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 3px;
+        height: 14px;
+        background: var(--vf-accent);
+        transform: translateX(-50%);
+      }
+      .forgebot .antenna::after {
         content: '';
         position: absolute;
-        inset: -10px -16px;
-        border: 2px solid var(--vf-accent);
+        left: 50%;
+        top: -9px;
+        width: 11px;
+        height: 11px;
         border-radius: 50%;
-        transform: scaleY(0.42);
-        opacity: 0.8;
+        transform: translateX(-50%);
+        background: radial-gradient(circle at 35% 30%, var(--vf-accent-strong), var(--vf-accent));
+        box-shadow: 0 0 10px var(--vf-accent);
       }
-      .forge .state {
+      .forgebot .head {
+        position: absolute;
+        left: 0;
+        top: 22px;
+        width: 96px;
+        height: 66px;
+        border-radius: 34px;
+        background: radial-gradient(
+          circle at 35% 25%,
+          var(--vf-text-primary),
+          var(--vf-text-secondary) 130%
+        );
+        box-shadow:
+          0 0 18px var(--vf-accent-tint),
+          inset 0 -6px 10px var(--vf-bg-overlay);
+      }
+      .forgebot .ear {
+        position: absolute;
+        top: 18px;
+        width: 12px;
+        height: 26px;
+        border-radius: 7px;
+        background: linear-gradient(var(--vf-accent-strong), var(--vf-accent));
+        box-shadow: 0 0 8px var(--vf-accent-tint);
+      }
+      .forgebot .ear.left {
+        left: -9px;
+      }
+      .forgebot .ear.right {
+        right: -9px;
+      }
+      .forgebot .visor {
+        position: absolute;
+        left: 12px;
+        top: 10px;
+        width: 72px;
+        height: 44px;
+        border-radius: 22px;
+        background: var(--vf-bg-overlay);
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
+      }
+      .forgebot .eye {
+        width: 16px;
+        height: 26px;
+        border-radius: 4px;
+        background: repeating-linear-gradient(
+          var(--vf-accent-strong) 0 3px,
+          var(--vf-accent-on) 3px 6px
+        );
+        background-size: 100% 12px;
+      }
+      .forgebot .torso {
+        position: absolute;
+        left: 18px;
+        top: 94px;
+        width: 60px;
+        height: 32px;
+        border-radius: 16px;
+        background: radial-gradient(
+          circle at 40% 25%,
+          var(--vf-text-primary),
+          var(--vf-text-secondary) 140%
+        );
+        box-shadow: 0 0 12px var(--vf-accent-tint);
+      }
+      .forgebot .chest {
+        position: absolute;
+        left: 16px;
+        top: 7px;
+        width: 28px;
+        height: 18px;
+        border-radius: 7px;
+        background: var(--vf-bg-overlay);
+      }
+      .forgebot .chest::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 8px;
+        height: 8px;
+        transform: translate(-50%, -50%) rotate(45deg);
+        background: var(--vf-accent);
+      }
+      .forge-state {
         font-family: var(--vf-font-mono);
         color: var(--vf-accent-strong);
       }
-      .forge p {
+      .forge-note {
         margin: var(--vf-space-xs) 0 0;
         color: var(--vf-text-secondary);
         font-size: 13px;
+        max-width: 70ch;
+      }
+      /* Forge moves around the dashboard (owner requirement): a slow wander. */
+      @keyframes forge-wander {
+        0%,
+        100% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        25% {
+          transform: translate(10px, -8px) rotate(2deg);
+        }
+        50% {
+          transform: translate(-6px, -14px) rotate(-2deg);
+        }
+        75% {
+          transform: translate(-12px, -4px) rotate(1deg);
+        }
+      }
+      .forgebot.wander {
+        animation: forge-wander 12s ease-in-out infinite;
+      }
+      /* Scanning: eye stripes scroll, antenna wiggles, head pulses. */
+      @keyframes forge-scan-eyes {
+        from {
+          background-position-y: 0;
+        }
+        to {
+          background-position-y: 12px;
+        }
+      }
+      @keyframes forge-scan-head {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-3px);
+        }
+      }
+      .forgebot.scanning .eye {
+        animation: forge-scan-eyes 0.6s linear infinite;
+      }
+      .forgebot.scanning .head {
+        animation: forge-scan-head 1.2s ease-in-out infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .forgebot.wander,
+        .forgebot.scanning .eye,
+        .forgebot.scanning .head {
+          animation: none;
+        }
       }
     </style>
   </head>
@@ -222,13 +368,21 @@
       </section>
 
       <section class="card wide forge">
-        <div class="lens" aria-label="Forge, idle"></div>
+        <div class="forgebot wander" aria-label="Forge robot">
+          <div class="antenna"></div>
+          <div class="head">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <div class="visor"><span class="eye"></span><span class="eye"></span></div>
+          </div>
+          <div class="torso"><div class="chest"></div></div>
+        </div>
         <div>
-          <div class="state">Forge &middot; IDLE</div>
-          <p>
-            The lens rests between scans. States: IDLE, SCANNING, ANALYZING, DETECTED, COMPLETED,
-            ERROR. Rendered in the TUI by packages/cli/src/tui/render3d.ts; here as CSS for the
-            prototype.
+          <div class="forge-state">Forge &middot; IDLE</div>
+          <p class="forge-note">
+            The robot drifts gently around the dashboard between scans (wander animation). States:
+            IDLE, SCANNING, ANALYZING, DETECTED, COMPLETED, ERROR. In the TUI it is rendered by
+            packages/cli/src/tui/render3d.ts; here as animated CSS for the prototype.
           </p>
         </div>
       </section>

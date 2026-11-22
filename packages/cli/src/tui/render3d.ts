@@ -3,6 +3,12 @@
  * Pure TypeScript, no native deps. Pipeline: model -> rotation -> projection
  * -> z-buffer -> Lambert shading -> character grid.
  *
+ * The model is Forge, the VulnForge robot: rounded glossy head with a dark
+ * visor and cyan striped eyes, antenna with a blue ball, blue side ears, and
+ * a small body with a chest screen. Direction comes from the owner's own
+ * reference image (see docs/proposal/design-brief.md); this rendering still
+ * awaits his G3 gate approval.
+ *
  * Every frame function is pure: (state, width, height, capabilities, t) ->
  * string[]. Golden frames at fixed t are deterministic.
  */
@@ -44,13 +50,23 @@ function rotate(point: Vec3, ay: number, ax: number): Vec3 {
 }
 
 // Viewer sits at -z (the z-buffer keeps the smallest z, culling keeps
-// normals facing -z, and the pupils live on the -z face), so the key
+// normals facing -z, and the visor lives on the -z face), so the key
 // light must come from the viewer's side too.
 const LIGHT: Vec3 = { x: -0.45, y: 0.75, z: -0.5 };
 
 function lambert(normal: Vec3): number {
   const dot = normal.x * LIGHT.x + normal.y * LIGHT.y + normal.z * LIGHT.z;
   return Math.max(0, dot);
+}
+
+/** Two-tone toon shading: smooth gradients turn to mush at terminal size. */
+function toon(normal: Vec3): number {
+  return lambert(normal) > 0.5 ? 1 : 0.66;
+}
+
+function normalize(v: Vec3): Vec3 {
+  const len = Math.hypot(v.x, v.y, v.z) || 1;
+  return { x: v.x / len, y: v.y / len, z: v.z / len };
 }
 
 function hexToRgb(hex: string): readonly [number, number, number] {
@@ -64,26 +80,17 @@ function mix(a: string, b: string, t: number): string {
   return `#${m.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/** The Forge lens: a squashed sphere plus an equatorial ring and two pupils. */
-function lensColor(point: Vec3, normal: Vec3, stateColor: string): string {
-  const shade = lambert(normal);
-  const base = mix(TUI_COLORS.bgRaised.hex, stateColor, 0.25 + 0.75 * shade);
-  // two small dark pupils on the face (-z side) give the lens its identity
-  const pupil =
-    normal.z < -0.55 &&
-    ((Math.abs(point.x - 0.32) < 0.13 && Math.abs(point.y - 0.12) < 0.13) ||
-      (Math.abs(point.x + 0.32) < 0.13 && Math.abs(point.y - 0.12) < 0.13));
-  return pupil ? TUI_COLORS.bgBase.hex : base;
+interface RobotPalette {
+  readonly body: string;
+  readonly visor: string;
+  readonly eyeLit: string;
+  readonly eyeDim: string;
+  readonly trim: string;
+  readonly glow: string;
 }
 
-/** Orthographic render of the Forge character into an RGB pixel grid. */
-export function renderForgePixels(
-  state: OrbState,
-  width: number,
-  height: number,
-  t: number,
-): (string | null)[][] {
-  const stateColor =
+function robotPalette(state: OrbState): RobotPalette {
+  const eye =
     state === 'COMPLETED'
       ? TUI_COLORS.success.hex
       : state === 'ERROR'
@@ -91,71 +98,192 @@ export function renderForgePixels(
         : state === 'DETECTED'
           ? TUI_COLORS.severityCritical.hex
           : TUI_COLORS.accent.hex;
+  return {
+    body: TUI_COLORS.textPrimary.hex, // glossy white shell
+    visor: TUI_COLORS.bgOverlay.hex, // dark glass face
+    eyeLit: mix(eye, TUI_COLORS.textPrimary.hex, 0.2),
+    eyeDim: mix(eye, TUI_COLORS.bgBase.hex, 0.7),
+    trim: TUI_COLORS.accent.hex, // ears, antenna, chest mark
+    glow: TUI_COLORS.accentTint.hex,
+  };
+}
 
-  const spin = state === 'SCANNING' ? t * 1.4 : state === 'ANALYZING' ? -t * 0.6 : t * 0.25;
-  const breathe = state === 'IDLE' ? 1 + 0.03 * Math.sin((t * 2 * Math.PI) / 3.6) : 1;
-  const tilt = state === 'SCANNING' ? 0.35 : 0.15;
+/** Orthographic render of the Forge robot into an RGB pixel grid.
+ *  SDF raymarching (one ray per pixel, fixed direction): exact coverage,
+ *  no sampling gaps, cheap at terminal resolutions. */
+export function renderForgePixels(
+  state: OrbState,
+  width: number,
+  height: number,
+  t: number,
+): (string | null)[][] {
+  const p = robotPalette(state);
+
+  // per-state motion
+  const spin =
+    state === 'SCANNING' ? t * 0.8 : state === 'ANALYZING' ? -t * 0.4 : 0.25 * Math.sin(t * 0.7);
+  const tilt = state === 'ANALYZING' ? 0.22 : 0.12;
+  const bob =
+    state === 'IDLE'
+      ? 0.05 * Math.sin((t * 2 * Math.PI) / 3.6)
+      : state === 'COMPLETED'
+        ? 0.09 * Math.abs(Math.sin(t * 3))
+        : 0;
+  const shake =
+    state === 'DETECTED'
+      ? 0.05 * Math.sin(t * 28)
+      : state === 'ERROR'
+        ? 0.03 * Math.sin(t * 18)
+        : 0;
+  const wiggle = state === 'SCANNING' ? 0.08 * Math.sin(t * 6) : 0;
+
+  const HEAD: Vec3 = { x: 0, y: 0.55, z: 0 };
+  const BODY: Vec3 = { x: 0, y: -0.68, z: 0 };
+
+  const sub = (a: Vec3, b: Vec3): Vec3 => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
+  const len = (x: number, y: number, z: number): number => Math.hypot(x, y, z);
+
+  function sdRoundBox(q: Vec3, bx: number, by: number, bz: number, r: number): number {
+    const ax = Math.abs(q.x) - bx;
+    const ay = Math.abs(q.y) - by;
+    const az = Math.abs(q.z) - bz;
+    const mx = Math.max(ax, 0);
+    const my = Math.max(ay, 0);
+    const mz = Math.max(az, 0);
+    return len(mx, my, mz) + Math.min(Math.max(ax, Math.max(ay, az)), 0) - r;
+  }
+  function sdEllipsoid(q: Vec3, rx: number, ry: number, rz: number): number {
+    const k0 = len(q.x / rx, q.y / ry, q.z / rz);
+    const k1 = len(q.x / (rx * rx), q.y / (ry * ry), q.z / (rz * rz));
+    return (k0 * (k0 - 1)) / Math.max(k1, 1e-9);
+  }
+
+  const HEAD_B = { x: 0.6, y: 0.46, z: 0.42, r: 0.2 };
+  const BODY_B = { x: 0.34, y: 0.2, z: 0.26, r: 0.16 };
+
+  type Part = 'head' | 'body' | 'ear' | 'arm' | 'antenna' | 'ball';
+
+  /** Scene SDF in robot-local space; returns distance and which part. */
+  function scene(q: Vec3): { d: number; part: Part } {
+    let d = sdRoundBox(sub(q, HEAD), HEAD_B.x, HEAD_B.y, HEAD_B.z, HEAD_B.r);
+    let part: Part = 'head';
+    const tryPart = (nd: number, np: Part): void => {
+      if (nd < d) {
+        d = nd;
+        part = np;
+      }
+    };
+    tryPart(sdRoundBox(sub(q, BODY), BODY_B.x, BODY_B.y, BODY_B.z, BODY_B.r), 'body');
+    for (const side of [-1, 1]) {
+      tryPart(sdEllipsoid(sub(q, { x: side * 0.8, y: 0.58, z: 0 }), 0.15, 0.28, 0.2), 'ear');
+      tryPart(sdEllipsoid(sub(q, { x: side * 0.62, y: -0.72, z: 0 }), 0.13, 0.28, 0.15), 'arm');
+    }
+    // antenna stalk (y 1.1 .. 1.3) and ball
+    const stalk =
+      len(
+        Math.max(len(q.x - wiggle * (q.y - 1.12) * 0.4, 0, 0) - 0.035, 0),
+        Math.max(Math.abs(q.y - 1.22) - 0.12, 0),
+        0,
+      ) - 0.005;
+    tryPart(stalk, 'antenna');
+    tryPart(len(q.x - wiggle, q.y - 1.4, q.z) - 0.1, 'ball');
+    return { d, part };
+  }
+
+  function normalAt(q: Vec3): Vec3 {
+    const e = 0.002;
+    const dx = scene({ x: q.x + e, y: q.y, z: q.z }).d - scene({ x: q.x - e, y: q.y, z: q.z }).d;
+    const dy = scene({ x: q.x, y: q.y + e, z: q.z }).d - scene({ x: q.x, y: q.y - e, z: q.z }).d;
+    const dz = scene({ x: q.x, y: q.y, z: q.z + e }).d - scene({ x: q.x, y: q.y, z: q.z - e }).d;
+    return normalize({ x: dx, y: dy, z: dz });
+  }
+
+  function shadePart(part: Part, q: Vec3, n: Vec3): string {
+    const shade = toon(n);
+    switch (part) {
+      case 'head': {
+        const local = sub(q, HEAD);
+        const bodyCol = mix(TUI_COLORS.bgRaised.hex, p.body, 0.72 + 0.28 * shade);
+        if (local.z > -0.34) return bodyCol; // visor only on the front face
+        const inVisor = Math.abs(local.x) < 0.48 && local.y > -0.22 && local.y < 0.28;
+        if (!inVisor) return bodyCol;
+        const eyeX = Math.abs(Math.abs(local.x) - 0.26) < 0.13;
+        const eyeY = local.y > -0.14 && local.y < 0.22;
+        if (eyeX && eyeY) {
+          const scroll = state === 'SCANNING' ? t * 3 : 0;
+          const stripe = Math.floor((local.y + scroll) / 0.07) % 2 === 0;
+          return stripe ? p.eyeLit : p.eyeDim;
+        }
+        return mix(p.visor, TUI_COLORS.accent.hex, 0.08);
+      }
+      case 'body': {
+        const local = sub(q, BODY);
+        const shell = mix(TUI_COLORS.bgRaised.hex, p.body, 0.72 + 0.28 * shade);
+        if (local.z > -0.22) return shell;
+        const inChest = Math.abs(local.x) < 0.2 && Math.abs(local.y) < 0.13;
+        if (!inChest) return shell;
+        const mark = Math.abs(local.x) + Math.abs(local.y) * 1.6 < 0.09;
+        return mark ? p.trim : mix(p.visor, TUI_COLORS.accent.hex, 0.08);
+      }
+      case 'ear':
+        return mix(p.trim, TUI_COLORS.accentStrong.hex, 0.45 + 0.5 * shade);
+      case 'arm':
+        return mix(TUI_COLORS.bgRaised.hex, p.body, 0.55 + 0.45 * shade);
+      case 'antenna':
+        return p.trim;
+      case 'ball':
+        return mix(p.trim, TUI_COLORS.accentStrong.hex, 0.4 + 0.5 * shade);
+    }
+  }
 
   const grid: (string | null)[][] = Array.from({ length: height }, () =>
     Array.from({ length: width }, () => null),
   );
-  // Nearest-to-viewer = smallest z, so the buffer starts at +Infinity.
-  const zbuf: number[][] = Array.from({ length: height }, () =>
-    Array.from({ length: width }, () => Infinity),
-  );
 
   const cx = width / 2;
   const cy = height / 2;
-  const radius = Math.min(width, height) * 0.36 * breathe;
-  // terminal pixels are ~2x taller than wide
-  const aspect = 0.5;
+  const scale = Math.min(width, height) * 0.3;
+  const aspect = 0.5; // terminal pixels are ~2x taller than wide
 
-  const LAT = 48;
-  const LON = 96;
-  for (let i = 0; i < LAT; i += 1) {
-    for (let j = 0; j < LON; j += 1) {
-      const theta = (i / LAT) * Math.PI;
-      const phi = (j / LON) * 2 * Math.PI;
-      const unit: Vec3 = {
-        x: Math.sin(theta) * Math.cos(phi),
-        y: Math.cos(theta) * 0.82, // the lens squash
-        z: Math.sin(theta) * Math.sin(phi),
-      };
-      const point = rotate(unit, spin, tilt);
-      const normal = rotate({ x: unit.x, y: unit.y / 0.82, z: unit.z }, spin, tilt);
-      if (normal.z >= 0) continue; // back face
-      const px = Math.round(cx + (point.x * radius) / aspect);
-      const py = Math.round(cy + point.y * radius);
-      if (px < 0 || px >= width || py < 0 || py >= height) continue;
-      const zrow = zbuf[py];
-      const grow = grid[py];
-      if (zrow !== undefined && grow !== undefined && point.z < (zrow[px] ?? Infinity)) {
-        zrow[px] = point.z;
-        grow[px] = lensColor(point, normal, stateColor);
+  for (let py = 0; py < height; py += 1) {
+    for (let px = 0; px < width; px += 1) {
+      // world-space ray: origin at z=-3, marching toward +z (viewer at -z)
+      const wx = (px - cx) / (scale / aspect) - shake;
+      const wy = (cy - py) / scale - bob; // world +y is up, rows grow down
+      // un-rotate into model space (inverse of rotate(., spin, tilt))
+      const o1 = rotate({ x: wx, y: wy, z: -3 }, 0, -tilt);
+      const o = rotate(o1, -spin, 0);
+      const d1 = rotate({ x: 0, y: 0, z: 1 }, 0, -tilt);
+      const dir = rotate(d1, -spin, 0);
+
+      let dist = 0;
+      let hit: { d: number; part: Part } | null = null;
+      for (let step = 0; step < 90; step += 1) {
+        const q = {
+          x: o.x + dir.x * dist,
+          y: o.y + dir.y * dist,
+          z: o.z + dir.z * dist,
+        };
+        const s = scene(q);
+        if (s.d < 0.004) {
+          hit = s;
+          break;
+        }
+        dist += s.d;
+        if (dist > 8) break;
+      }
+      if (hit !== null) {
+        const q = {
+          x: o.x + dir.x * dist,
+          y: o.y + dir.y * dist,
+          z: o.z + dir.z * dist,
+        };
+        const n = normalAt(q);
+        const row = grid[py];
+        if (row !== undefined) row[px] = shadePart(hit.part, q, n);
       }
     }
   }
-
-  // equatorial ring, pulse while scanning
-  const ringPulse = state === 'SCANNING' ? 1 + 0.12 * Math.sin(t * 4) : 1;
-  const ringRadius = 1.35 * ringPulse;
-  const SEGMENTS = 120;
-  for (let s = 0; s < SEGMENTS; s += 1) {
-    const a = (s / SEGMENTS) * 2 * Math.PI;
-    const point = rotate(
-      { x: Math.cos(a) * ringRadius, y: 0, z: Math.sin(a) * ringRadius },
-      spin,
-      0.9,
-    );
-    const px = Math.round(cx + (point.x * radius) / aspect);
-    const py = Math.round(cy + point.y * radius);
-    if (px < 0 || px >= width || py < 0 || py >= height) continue;
-    const grow = grid[py];
-    if (grow !== undefined) {
-      grow[px] = mix(stateColor, TUI_COLORS.textPrimary.hex, 0.4);
-    }
-  }
-
   return grid;
 }
 
@@ -218,7 +346,7 @@ export function rasterize(pixels: (string | null)[][], capabilities: RenderCapab
   return rows;
 }
 
-/** The pure frame function: the Forge character in any state, any t. */
+/** The pure frame function: the Forge robot in any state, any t. */
 export function forgeFrame(
   state: OrbState,
   width: number,

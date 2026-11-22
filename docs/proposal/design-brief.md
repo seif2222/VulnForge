@@ -10,9 +10,15 @@ attached is produced by the real renderer code.
 
 VulnForge is a calm security operations workspace: precise, quiet, confident,
 readable. Dark-first, one theme. The signature element is **Forge**, the 3D
-agent character: a shaded lens (squashed sphere) with a single equatorial ring
-and two small eye points. A lens reads at 8 px on the dashboard and at 9 cells
-in a terminal; the ring gives it a silhouette no other element has.
+agent character: a small rounded robot, taken from the owner's own reference
+image (revision 1 of this gate: he rejected the original lens-and-ring concept
+and chose this robot). Glossy white shell, dark visor face with two cyan
+striped eye bars, a short antenna with a blue ball tip, blue side ears, and a
+small body with a chest screen. The white shell against the dark theme plus
+the glowing cyan visor give it a silhouette no other element has. Forge is
+present on both surfaces: it wanders the dashboard (a live animated presence,
+never a static icon) and renders in the terminal through the software 3D
+renderer.
 
 ## 2. Palette (all values from the token source)
 
@@ -94,23 +100,24 @@ Timings are tokens: fast 120 ms, base 200 ms, slow 360 ms, easing
 cubic-bezier(0.2, 0, 0, 1). CSS keyframes animate transform/opacity only. No
 blur, no backdrop-filter. prefers-reduced-motion: static pose, no loops.
 
-What moves and why: only state communication. The Forge lens breathes when
-idle, rotates with radar rings while scanning, flares in the worst severity
-color on detection then settles, glows steady on completion, dims on error.
+What moves and why: only state communication. The Forge robot bobs gently
+when idle, wanders the dashboard between scans, sweeps its eye stripes and
+wiggles its antenna while scanning, tilts its head while analyzing, shakes on
+detection, bounces once on completion, shivers then goes still on error.
 The dependency graph never animates except layout settle (360 ms) and hover
 focus. The Live Monitor scan visual lights nodes strictly as their real OSV
 queries complete — no decorative particles, no fake traffic.
 
 ### Forge state sheet (all six states)
 
-| State     | Pose                        | Motion                                                | Color          |
-| --------- | --------------------------- | ----------------------------------------------------- | -------------- |
-| IDLE      | lens level, ring flat       | 3.6 s breathing scale 1.00-1.03                       | accent         |
-| SCANNING  | lens tilted 20°             | continuous rotation, ring pulses outward, radar sweep | accent         |
-| ANALYZING | lens level, ring contracted | slow inner counter-rotation                           | accent-strong  |
-| DETECTED  | lens flares once            | flare 360 ms in worst severity color, then slow pulse | worst severity |
-| COMPLETED | lens level                  | single ring settle, steady glow                       | success        |
-| ERROR     | lens dimmed, ring dropped   | 120 ms shiver on entry, then still                    | danger         |
+| State     | Pose                      | Motion                                             | Color          |
+| --------- | ------------------------- | -------------------------------------------------- | -------------- |
+| IDLE      | upright, slow sway        | 3.6 s breathing bob; dashboard wander loop (12 s)  | accent         |
+| SCANNING  | slight tilt               | slow rotation, eye stripes scroll, antenna wiggles | accent         |
+| ANALYZING | head tilted               | slow counter-sway                                  | accent-strong  |
+| DETECTED  | eyes flash worst severity | 28 Hz micro-shake, eyes hold severity color        | worst severity |
+| COMPLETED | upright                   | single bounce, eyes steady success green           | success        |
+| ERROR     | dimmed                    | 18 Hz shiver on entry, then still, eyes danger red | danger         |
 
 DETECTED persists until the next real event (spec). State changes blend over
 base timing; animation stops immediately when the state leaves one that
@@ -137,11 +144,12 @@ Fallback: 2D SVG/CSS rendering of the same scene-model data when WebGL is
 missing or reduced-motion is set. Bundle-size delta reported in the G4/G5
 phase report.
 
-Terminal: pure-TypeScript software renderer (no native deps): model ->
-rotation/projection -> z-buffer -> Lambert shading -> character grid.
-Half-block cells by default (2 vertical pixels per cell), Braille for the
-ring wireframe, ASCII luminance ramp without Unicode, 16-color and NO_COLOR
-monochrome fallbacks. Frame budget 12 fps (token `tuiFrameMs = 83`), pure
+Terminal: pure-TypeScript software renderer (no native deps): SDF model of
+the robot (rounded-box head/body, ellipsoid ears and arms, cylinder antenna)
+-> raymarched per pixel -> two-tone toon shading -> character grid.
+Half-block cells by default (2 vertical pixels per cell), ASCII luminance
+ramp without Unicode, 16-color and NO_COLOR monochrome fallbacks. The robot
+is built from the same six states on both surfaces. Frame budget 12 fps (token `tuiFrameMs = 83`), pure
 frame functions `(state, width, height, capabilities, t) -> string[]`,
 differential redraw, runs only while visible and the state requires it.
 Every 3D visual has a static frame.
@@ -149,9 +157,9 @@ Every 3D visual has a static frame.
 ## 10. Prototypes attached to this gate
 
 - `prototypes/tui-overview-agent.frame.txt` — real renderer output: the Forge
-  lens + ring in IDLE at fixed t (half-block, truecolor stripped for review).
+  robot in IDLE at fixed t (half-block, truecolor stripped for review).
 - `prototypes/tui-live-monitor-scanning.frame.txt` — Live Monitor scan visual
-  mid-scan (3 of 5 package nodes lit, fixed t).
+  mid-scan (2 of 3 package nodes lit, fixed t) with Forge SCANNING.
 - `prototypes/tui-frames.html` — the same frames with real colors for review
   in a browser.
 - Dashboard static prototypes: `prototypes/dashboard-overview.html` and
@@ -160,3 +168,15 @@ Every 3D visual has a static frame.
 
 STOP: owner approval before any G4 (shared logic + server) or G5 (screens)
 work begins.
+
+## 11. Revision log
+
+- **Revision 1 (2026-11-22):** the owner rejected the original lens-and-ring
+  Forge concept and supplied his own reference: a rounded white glossy robot
+  with blue glow, dark visor face, cyan striped eyes, antenna with a blue
+  ball, blue side ears, small body. He also required Forge to move around the
+  dashboard (animated presence), appear in the terminal, and have a dedicated
+  scanning animation. Identity, state sheet, TUI renderer (now an SDF
+  raymarcher), dashboard prototypes (animated CSS robot with wander and
+  scanning loops), and prototype frames were reworked to match. Palette,
+  tokens, screens, and all other rules are unchanged.
