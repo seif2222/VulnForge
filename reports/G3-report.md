@@ -118,6 +118,16 @@ Changes made in response:
 
 Everything else in this report (tokens, hex-audit, screens, limits) stands.
 
+## Revision 2 (2026-11-22, same gate)
+
+Owner direction: significantly more visual wow in the dashboard, with data
+accuracy and clarity non-negotiable. The two dashboard prototypes were
+rebuilt richer (hero + floating robot + blueprint grid, labelled animated
+distribution bars, severity pills, glowing toplines/glyphs, severity-colored
+dependency tree, hover lift, radar sweep in Live Monitor). All values remain
+tokens; all numbers remain fixture data; the spec's binding display rules are
+unchanged. TUI renderer and frames unchanged in this revision.
+
 ## Gate
 
 Owner approval needed on: the Forge robot identity (his own reference, as rendered by the new

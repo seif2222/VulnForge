@@ -13,6 +13,10 @@
         color: var(--vf-text-primary);
         font-family: var(--vf-font-sans);
         margin: 0;
+        background-image:
+          radial-gradient(900px 320px at 15% -60px, var(--vf-accent-tint), transparent),
+          radial-gradient(700px 280px at 85% -40px, var(--vf-accent-tint), transparent);
+        background-repeat: no-repeat;
       }
       header {
         display: flex;
@@ -24,6 +28,7 @@
       header .brand {
         font-family: var(--vf-font-mono);
         font-weight: 700;
+        letter-spacing: 0.04em;
       }
       header .meta {
         color: var(--vf-text-secondary);
@@ -34,6 +39,7 @@
         gap: 2px;
         padding: 0 var(--vf-space-lg);
         border-bottom: 1px solid var(--vf-border-subtle);
+        background: color-mix(in srgb, var(--vf-bg-raised) 55%, transparent);
       }
       nav.tabs a {
         font-family: var(--vf-font-mono);
@@ -41,23 +47,39 @@
         color: var(--vf-text-secondary);
         text-decoration: none;
         padding: var(--vf-space-sm) var(--vf-space-md);
+        transition:
+          color var(--vf-motion-fast) var(--vf-motion-easing),
+          background var(--vf-motion-fast) var(--vf-motion-easing);
+      }
+      nav.tabs a:hover {
+        color: var(--vf-text-primary);
       }
       nav.tabs a.active {
         color: var(--vf-accent-strong);
         border-bottom: 2px solid var(--vf-accent);
+        background: linear-gradient(transparent 60%, var(--vf-accent-tint));
       }
       main {
         padding: var(--vf-space-lg);
         display: grid;
         gap: var(--vf-space-md);
         grid-template-columns: repeat(4, 1fr);
-        max-width: 1100px;
+        max-width: 1180px;
       }
       .card {
-        background: var(--vf-bg-raised);
+        background: linear-gradient(160deg, var(--vf-bg-raised), var(--vf-bg-base) 140%);
         border: 1px solid var(--vf-border-subtle);
-        border-radius: 8px;
+        border-radius: var(--vf-radius-lg);
         padding: var(--vf-space-md);
+        transition:
+          transform var(--vf-motion-base) var(--vf-motion-easing),
+          border-color var(--vf-motion-base) var(--vf-motion-easing),
+          box-shadow var(--vf-motion-base) var(--vf-motion-easing);
+      }
+      .card:hover {
+        transform: translateY(-2px);
+        border-color: var(--vf-border-strong);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
       }
       .card h3 {
         margin: 0 0 var(--vf-space-xs);
@@ -65,9 +87,156 @@
         font-weight: 500;
         color: var(--vf-text-secondary);
       }
-      .card .num {
+      section.wide {
+        grid-column: 1 / -1;
+      }
+
+      /* hero: Forge presence + last scan summary */
+      .hero {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: var(--vf-space-lg);
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--vf-border-subtle) 1px, transparent 1px),
+          linear-gradient(90deg, var(--vf-border-subtle) 1px, transparent 1px);
+        background-size: 28px 28px;
+        opacity: 0.25;
+        mask-image: radial-gradient(420px 200px at 18% 50%, black, transparent);
+        pointer-events: none;
+      }
+      .hero .stage {
+        position: relative;
+        height: 190px;
+        display: grid;
+        place-items: center;
+      }
+      .hero .pad {
+        position: absolute;
+        bottom: 12px;
+        width: 130px;
+        height: 26px;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, var(--vf-accent-tint), transparent);
+      }
+      .hero h2 {
+        margin: 0;
+        font-size: 22px;
         font-family: var(--vf-font-mono);
-        font-size: 28px;
+      }
+      .hero .sub {
+        color: var(--vf-text-secondary);
+        font-size: 13px;
+        margin: var(--vf-space-xs) 0 var(--vf-space-md);
+      }
+      .hero .bignum {
+        font-family: var(--vf-font-mono);
+        font-size: 44px;
+        line-height: 1;
+      }
+      .hero .bignum small {
+        font-size: 13px;
+        color: var(--vf-text-secondary);
+      }
+
+      /* severity distribution bars (labelled share-of-total) */
+      .dist {
+        display: grid;
+        gap: var(--vf-space-xs);
+        margin-top: var(--vf-space-md);
+        max-width: 520px;
+      }
+      .dist .row {
+        display: grid;
+        grid-template-columns: 92px 1fr 84px;
+        gap: var(--vf-space-sm);
+        align-items: center;
+        font-family: var(--vf-font-mono);
+        font-size: 12px;
+      }
+      .dist .bar {
+        height: 10px;
+        border-radius: 5px;
+        background: var(--vf-bg-overlay);
+        overflow: hidden;
+      }
+      .dist .fill {
+        height: 100%;
+        border-radius: 5px;
+        transform-origin: left;
+        animation: grow var(--vf-motion-slow) var(--vf-motion-easing) both;
+      }
+      @keyframes grow {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      .f-crit {
+        background: linear-gradient(
+          90deg,
+          var(--vf-severity-critical-tint),
+          var(--vf-severity-critical)
+        );
+      }
+      .f-high {
+        background: linear-gradient(90deg, var(--vf-severity-high-tint), var(--vf-severity-high));
+      }
+      .f-med {
+        background: linear-gradient(
+          90deg,
+          var(--vf-severity-medium-tint),
+          var(--vf-severity-medium)
+        );
+      }
+      .f-low {
+        background: linear-gradient(90deg, var(--vf-severity-low-tint), var(--vf-severity-low));
+      }
+      .share {
+        color: var(--vf-text-secondary);
+        text-align: right;
+      }
+
+      /* stat cards */
+      .stat .num {
+        font-family: var(--vf-font-mono);
+        font-size: 34px;
+        line-height: 1.1;
+      }
+      .stat {
+        position: relative;
+      }
+      .stat::after {
+        content: '';
+        position: absolute;
+        left: var(--vf-space-md);
+        right: var(--vf-space-md);
+        top: 0;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--vf-border-subtle);
+      }
+      .stat.crit::after {
+        background: var(--vf-severity-critical);
+        box-shadow: 0 0 12px var(--vf-severity-critical);
+      }
+      .stat.high::after {
+        background: var(--vf-severity-high);
+        box-shadow: 0 0 12px var(--vf-severity-high);
+      }
+      .stat.inv::after {
+        background: var(--vf-accent);
+        box-shadow: 0 0 12px var(--vf-accent);
       }
       .num.crit {
         color: var(--vf-severity-critical);
@@ -75,9 +244,8 @@
       .num.high {
         color: var(--vf-severity-high);
       }
-      section.wide {
-        grid-column: 1 / -1;
-      }
+
+      /* findings table */
       table {
         width: 100%;
         border-collapse: collapse;
@@ -94,38 +262,67 @@
         color: var(--vf-text-secondary);
         font-weight: 500;
       }
+      tbody tr {
+        transition: background var(--vf-motion-fast) var(--vf-motion-easing);
+      }
+      tbody tr:hover {
+        background: var(--vf-bg-overlay);
+      }
       .glyph {
         display: inline-block;
         width: 1.2em;
       }
       .g-crit {
         color: var(--vf-severity-critical);
+        text-shadow: 0 0 8px var(--vf-severity-critical);
       }
       .g-high {
         color: var(--vf-severity-high);
+        text-shadow: 0 0 8px var(--vf-severity-high);
       }
       .g-med {
         color: var(--vf-severity-medium);
       }
-      .forge {
-        display: flex;
-        gap: var(--vf-space-md);
-        align-items: center;
+      .sev {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 99px;
+        font-size: 11px;
       }
-      /* Forge robot - matches the owner's reference: glossy white shell,
-         dark visor with cyan striped eyes, antenna with blue ball, blue ears. */
+      .sev.crit {
+        background: var(--vf-severity-critical-tint);
+        color: var(--vf-severity-critical);
+      }
+      .sev.high {
+        background: var(--vf-severity-high-tint);
+        color: var(--vf-severity-high);
+      }
+      .sev.med {
+        background: var(--vf-severity-medium-tint);
+        color: var(--vf-severity-medium);
+      }
+
+      /* dependency tree mock (real fixture packages) */
+      .tree svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        font-family: var(--vf-font-mono);
+      }
+
+      /* Forge robot */
       .forgebot {
         position: relative;
-        width: 96px;
-        height: 128px;
+        width: 130px;
+        height: 172px;
         flex: none;
       }
       .forgebot .antenna {
         position: absolute;
         left: 50%;
         top: 0;
-        width: 3px;
-        height: 14px;
+        width: 4px;
+        height: 20px;
         background: var(--vf-accent);
         transform: translateX(-50%);
       }
@@ -133,89 +330,90 @@
         content: '';
         position: absolute;
         left: 50%;
-        top: -9px;
-        width: 11px;
-        height: 11px;
+        top: -12px;
+        width: 15px;
+        height: 15px;
         border-radius: 50%;
         transform: translateX(-50%);
         background: radial-gradient(circle at 35% 30%, var(--vf-accent-strong), var(--vf-accent));
-        box-shadow: 0 0 10px var(--vf-accent);
+        box-shadow: 0 0 14px var(--vf-accent);
       }
       .forgebot .head {
         position: absolute;
         left: 0;
-        top: 22px;
-        width: 96px;
-        height: 66px;
-        border-radius: 34px;
+        top: 30px;
+        width: 130px;
+        height: 90px;
+        border-radius: 46px;
         background: radial-gradient(
           circle at 35% 25%,
           var(--vf-text-primary),
           var(--vf-text-secondary) 130%
         );
         box-shadow:
-          0 0 18px var(--vf-accent-tint),
-          inset 0 -6px 10px var(--vf-bg-overlay);
+          0 0 26px var(--vf-accent-tint),
+          inset 0 -8px 14px var(--vf-bg-overlay);
       }
       .forgebot .ear {
         position: absolute;
-        top: 18px;
-        width: 12px;
-        height: 26px;
-        border-radius: 7px;
+        top: 24px;
+        width: 16px;
+        height: 36px;
+        border-radius: 9px;
         background: linear-gradient(var(--vf-accent-strong), var(--vf-accent));
-        box-shadow: 0 0 8px var(--vf-accent-tint);
+        box-shadow: 0 0 10px var(--vf-accent);
       }
       .forgebot .ear.left {
-        left: -9px;
+        left: -12px;
       }
       .forgebot .ear.right {
-        right: -9px;
+        right: -12px;
       }
       .forgebot .visor {
         position: absolute;
-        left: 12px;
-        top: 10px;
-        width: 72px;
-        height: 44px;
-        border-radius: 22px;
+        left: 16px;
+        top: 14px;
+        width: 98px;
+        height: 60px;
+        border-radius: 30px;
         background: var(--vf-bg-overlay);
         display: flex;
         align-items: center;
         justify-content: space-evenly;
-        box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6);
       }
       .forgebot .eye {
-        width: 16px;
-        height: 26px;
-        border-radius: 4px;
+        width: 22px;
+        height: 36px;
+        border-radius: 5px;
         background: repeating-linear-gradient(
-          var(--vf-accent-strong) 0 3px,
-          var(--vf-accent-on) 3px 6px
+          var(--vf-accent-strong) 0 4px,
+          var(--vf-accent-on) 4px 8px
         );
-        background-size: 100% 12px;
+        background-size: 100% 16px;
+        box-shadow: 0 0 10px var(--vf-accent);
       }
       .forgebot .torso {
         position: absolute;
-        left: 18px;
-        top: 94px;
-        width: 60px;
-        height: 32px;
-        border-radius: 16px;
+        left: 25px;
+        top: 128px;
+        width: 80px;
+        height: 42px;
+        border-radius: 22px;
         background: radial-gradient(
           circle at 40% 25%,
           var(--vf-text-primary),
           var(--vf-text-secondary) 140%
         );
-        box-shadow: 0 0 12px var(--vf-accent-tint);
+        box-shadow: 0 0 16px var(--vf-accent-tint);
       }
       .forgebot .chest {
         position: absolute;
-        left: 16px;
-        top: 7px;
-        width: 28px;
-        height: 18px;
-        border-radius: 7px;
+        left: 22px;
+        top: 10px;
+        width: 36px;
+        height: 22px;
+        border-radius: 9px;
         background: var(--vf-bg-overlay);
       }
       .forgebot .chest::after {
@@ -223,10 +421,11 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
         transform: translate(-50%, -50%) rotate(45deg);
         background: var(--vf-accent);
+        box-shadow: 0 0 8px var(--vf-accent);
       }
       .forge-state {
         font-family: var(--vf-font-mono);
@@ -238,53 +437,40 @@
         font-size: 13px;
         max-width: 70ch;
       }
-      /* Forge moves around the dashboard (owner requirement): a slow wander. */
       @keyframes forge-wander {
         0%,
         100% {
           transform: translate(0, 0) rotate(0deg);
         }
         25% {
-          transform: translate(10px, -8px) rotate(2deg);
+          transform: translate(14px, -12px) rotate(2.5deg);
         }
         50% {
-          transform: translate(-6px, -14px) rotate(-2deg);
+          transform: translate(-8px, -20px) rotate(-2.5deg);
         }
         75% {
-          transform: translate(-12px, -4px) rotate(1deg);
+          transform: translate(-16px, -6px) rotate(1.5deg);
         }
       }
       .forgebot.wander {
         animation: forge-wander 12s ease-in-out infinite;
       }
-      /* Scanning: eye stripes scroll, antenna wiggles, head pulses. */
-      @keyframes forge-scan-eyes {
-        from {
-          background-position-y: 0;
-        }
-        to {
-          background-position-y: 12px;
-        }
-      }
-      @keyframes forge-scan-head {
+      @keyframes forge-float {
         0%,
         100% {
           transform: translateY(0);
         }
         50% {
-          transform: translateY(-3px);
+          transform: translateY(-8px);
         }
       }
-      .forgebot.scanning .eye {
-        animation: forge-scan-eyes 0.6s linear infinite;
-      }
-      .forgebot.scanning .head {
-        animation: forge-scan-head 1.2s ease-in-out infinite;
+      .forgebot.float {
+        animation: forge-float 4.2s ease-in-out infinite;
       }
       @media (prefers-reduced-motion: reduce) {
         .forgebot.wander,
-        .forgebot.scanning .eye,
-        .forgebot.scanning .head {
+        .forgebot.float,
+        .dist .fill {
           animation: none;
         }
       }
@@ -306,83 +492,206 @@
       <a href="#">8 Settings</a>
     </nav>
     <main>
-      <div class="card">
+      <section class="card hero">
+        <div class="stage">
+          <div class="pad"></div>
+          <div class="forgebot wander" aria-label="Forge robot, idle">
+            <div class="antenna"></div>
+            <div class="head">
+              <div class="ear left"></div>
+              <div class="ear right"></div>
+              <div class="visor"><span class="eye"></span><span class="eye"></span></div>
+            </div>
+            <div class="torso"><div class="chest"></div></div>
+          </div>
+        </div>
+        <div>
+          <h2>vulnerable-npm</h2>
+          <div class="sub">last scan complete &middot; schema v6 &middot; Forge is idle</div>
+          <div class="bignum">10 <small>findings &middot; top score 95</small></div>
+          <div class="dist">
+            <div class="row">
+              <span><span class="glyph g-crit">&#9679;</span> critical</span>
+              <div class="bar"><div class="fill f-crit" style="width: 10%"></div></div>
+              <span class="share">1 &middot; 10%</span>
+            </div>
+            <div class="row">
+              <span><span class="glyph g-high">&#9650;</span> high</span>
+              <div class="bar"><div class="fill f-high" style="width: 40%"></div></div>
+              <span class="share">4 &middot; 40%</span>
+            </div>
+            <div class="row">
+              <span><span class="glyph g-med">&#9632;</span> medium</span>
+              <div class="bar"><div class="fill f-med" style="width: 50%"></div></div>
+              <span class="share">5 &middot; 50%</span>
+            </div>
+            <div class="row">
+              <span><span class="glyph">&#9675;</span> low</span>
+              <div class="bar"><div class="fill f-low" style="width: 0%"></div></div>
+              <span class="share">0 &middot; 0%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="card stat inv">
         <h3>Dependency Inventory</h3>
         <div class="num">3</div>
       </div>
-      <div class="card">
+      <div class="card stat crit">
         <h3>Critical</h3>
         <div class="num crit">1</div>
       </div>
-      <div class="card">
+      <div class="card stat high">
         <h3>High</h3>
         <div class="num high">4</div>
       </div>
-      <div class="card">
+      <div class="card stat">
         <h3>Unresolved Requirements</h3>
         <div class="num">0</div>
       </div>
 
       <section class="card wide">
         <h3>
-          Findings sample (fixture: vulnerable-npm, 10 findings, top score 95; rows read from
-          fixtures/osv recordings)
+          Findings sample (fixture: vulnerable-npm, 10 findings; rows read from fixtures/osv
+          recordings)
         </h3>
         <table>
-          <tr>
-            <th></th>
-            <th>Severity</th>
-            <th>Package</th>
-            <th>CVE</th>
-            <th>Fix</th>
-          </tr>
-          <tr>
-            <td><span class="glyph g-crit">&#9679;</span></td>
-            <td>critical</td>
-            <td>minimist 1.2.5</td>
-            <td>CVE-2021-44906</td>
-            <td>1.2.6</td>
-          </tr>
-          <tr>
-            <td><span class="glyph g-high">&#9650;</span></td>
-            <td>high</td>
-            <td>lodash 4.17.20</td>
-            <td>CVE-2021-23337</td>
-            <td>4.17.21</td>
-          </tr>
-          <tr>
-            <td><span class="glyph g-high">&#9650;</span></td>
-            <td>high</td>
-            <td>qs 5.2.0</td>
-            <td>CVE-2022-24999</td>
-            <td>6.2.4</td>
-          </tr>
-          <tr>
-            <td><span class="glyph g-med">&#9632;</span></td>
-            <td>medium</td>
-            <td>lodash 4.17.20</td>
-            <td>CVE-2020-28500</td>
-            <td>4.17.21</td>
-          </tr>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Severity</th>
+              <th>Package</th>
+              <th>CVE</th>
+              <th>Fix</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="glyph g-crit">&#9679;</span></td>
+              <td><span class="sev crit">critical</span></td>
+              <td>minimist 1.2.5</td>
+              <td>CVE-2021-44906</td>
+              <td>1.2.6</td>
+            </tr>
+            <tr>
+              <td><span class="glyph g-high">&#9650;</span></td>
+              <td><span class="sev high">high</span></td>
+              <td>lodash 4.17.20</td>
+              <td>CVE-2021-23337</td>
+              <td>4.17.21</td>
+            </tr>
+            <tr>
+              <td><span class="glyph g-high">&#9650;</span></td>
+              <td><span class="sev high">high</span></td>
+              <td>qs 5.2.0</td>
+              <td>CVE-2022-24999</td>
+              <td>6.2.4</td>
+            </tr>
+            <tr>
+              <td><span class="glyph g-med">&#9632;</span></td>
+              <td><span class="sev med">medium</span></td>
+              <td>lodash 4.17.20</td>
+              <td>CVE-2020-28500</td>
+              <td>4.17.21</td>
+            </tr>
+          </tbody>
         </table>
       </section>
 
-      <section class="card wide forge">
-        <div class="forgebot wander" aria-label="Forge robot">
-          <div class="antenna"></div>
-          <div class="head">
-            <div class="ear left"></div>
-            <div class="ear right"></div>
-            <div class="visor"><span class="eye"></span><span class="eye"></span></div>
-          </div>
-          <div class="torso"><div class="chest"></div></div>
-        </div>
+      <section class="card wide tree">
+        <h3>Dependency tree (real fixture packages; edge color = worst severity in subtree)</h3>
+        <svg viewBox="0 0 760 210" role="img" aria-label="dependency tree of vulnerable-npm">
+          <line
+            x1="180"
+            y1="105"
+            x2="360"
+            y2="45"
+            stroke="var(--vf-severity-high)"
+            stroke-width="2"
+            opacity="0.7" />
+          <line
+            x1="180"
+            y1="105"
+            x2="360"
+            y2="105"
+            stroke="var(--vf-severity-critical)"
+            stroke-width="2.5"
+            opacity="0.85" />
+          <line
+            x1="180"
+            y1="105"
+            x2="360"
+            y2="165"
+            stroke="var(--vf-severity-high)"
+            stroke-width="2"
+            opacity="0.7" />
+          <rect
+            x="30"
+            y="84"
+            width="150"
+            height="42"
+            rx="10"
+            fill="var(--vf-bg-overlay)"
+            stroke="var(--vf-border-strong)" />
+          <text x="105" y="110" fill="var(--vf-text-primary)" font-size="13" text-anchor="middle">
+            vulnerable-npm
+          </text>
+          <rect
+            x="360"
+            y="24"
+            width="170"
+            height="42"
+            rx="10"
+            fill="var(--vf-bg-raised)"
+            stroke="var(--vf-severity-high)" />
+          <text x="445" y="50" fill="var(--vf-text-primary)" font-size="13" text-anchor="middle">
+            lodash 4.17.20
+          </text>
+          <rect
+            x="360"
+            y="84"
+            width="170"
+            height="42"
+            rx="10"
+            fill="var(--vf-bg-raised)"
+            stroke="var(--vf-severity-critical)" />
+          <text x="445" y="110" fill="var(--vf-text-primary)" font-size="13" text-anchor="middle">
+            minimist 1.2.5
+          </text>
+          <rect
+            x="360"
+            y="144"
+            width="170"
+            height="42"
+            rx="10"
+            fill="var(--vf-bg-raised)"
+            stroke="var(--vf-severity-high)" />
+          <text x="445" y="170" fill="var(--vf-text-primary)" font-size="13" text-anchor="middle">
+            qs 5.2.0
+          </text>
+          <text x="560" y="50" fill="var(--vf-severity-high)" font-size="12">
+            &#9650; 5 findings
+          </text>
+          <text x="560" y="110" fill="var(--vf-severity-critical)" font-size="12">
+            &#9679; 1 finding
+          </text>
+          <text x="560" y="170" fill="var(--vf-severity-high)" font-size="12">
+            &#9650; 4 findings
+          </text>
+        </svg>
+      </section>
+
+      <section
+        class="card wide"
+        style="display: flex; gap: var(--vf-space-md); align-items: center">
         <div>
           <div class="forge-state">Forge &middot; IDLE</div>
           <p class="forge-note">
-            The robot drifts gently around the dashboard between scans (wander animation). States:
-            IDLE, SCANNING, ANALYZING, DETECTED, COMPLETED, ERROR. In the TUI it is rendered by
-            packages/cli/src/tui/render3d.ts; here as animated CSS for the prototype.
+            Forge lives in the dashboard as an animated presence: it floats on its pad in the hero
+            and wanders between panels (12 s loop above). States: IDLE, SCANNING, ANALYZING,
+            DETECTED, COMPLETED, ERROR. In the terminal it is rendered by the project's own software
+            3D renderer (packages/cli/src/tui/render3d.ts).
           </p>
         </div>
       </section>

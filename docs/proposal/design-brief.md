@@ -180,3 +180,16 @@ work begins.
   raymarcher), dashboard prototypes (animated CSS robot with wander and
   scanning loops), and prototype frames were reworked to match. Palette,
   tokens, screens, and all other rules are unchanged.
+
+- **Revision 2 (2026-11-22):** owner direction: more visual impact in the
+  dashboard ("defense-demo grade") while data stays accurate and clearly
+  readable. The dashboard prototypes were rebuilt richer: hero card with the
+  floating Forge robot and a blueprint grid, labelled severity distribution
+  bars (animated draw-on), severity pills and glowing glyphs in the findings
+  table, glowing stat-card toplines, a severity-colored dependency tree
+  visual, hover lift on cards, and radar-sweep rings around Forge in the Live
+  Monitor. All colors remain design tokens; motion stays transform/opacity
+  only with prefers-reduced-motion fallbacks; every number still comes from
+  the vulnerable-npm fixture. The binding display rules (8 tabs, honest
+  identifiers, "Querying OSV - N / M queries", no whole-scan percentage) are
+  untouched.
