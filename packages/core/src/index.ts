@@ -103,6 +103,25 @@ export {
 export type { OsvErrorCode, OsvHttp, OsvHttpOptions } from './osv-http.js';
 
 export {
+  NPM_REGISTRY_ENDPOINT,
+  REGISTRY_ERROR_CODES,
+  RegistryError,
+  createNpmRegistry,
+  pickRegistryVersion,
+  resolveManifestRanges,
+} from './npm-registry.js';
+export type {
+  NpmRegistry,
+  NpmRegistryOptions,
+  RegistryErrorCode,
+  RegistryPackageMetadata,
+  RegistryResolution,
+} from './npm-registry.js';
+
+export { compareSemver, maxSatisfying, parseSemver, satisfiesSemver } from './npm-semver.js';
+export type { Semver } from './npm-semver.js';
+
+export {
   DEFAULT_CACHE_TTL_MS,
   OSV_CACHE_MISS_CODES,
   OsvCacheMissError,

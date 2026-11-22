@@ -5,6 +5,8 @@ import { isProjectParseError, ProjectParseError } from './errors.js';
 import { applyIgnores, parseIgnoreFile, rulesFromFlags, type IgnoreRule } from './ignore.js';
 import { matchVulnerabilities, type MatchProgress } from './match.js';
 import { hasNpmLockfile, parseNpm, parseNpmManifestOnly } from './npm-parse.js';
+import { createNpmRegistry, resolveManifestRanges, type NpmRegistry } from './npm-registry.js';
+import { sortPackageEntries } from './package-key.js';
 import type { OsvCache } from './osv-cache.js';
 import type { OsvHttp } from './osv-http.js';
 import { parsePython } from './python-parse.js';
@@ -45,6 +47,12 @@ export interface AnalyzeOptions {
 export interface AnalyzeDeps {
   readonly http?: OsvHttp;
   readonly cache?: OsvCache;
+  /**
+   * Registry client for resolving lockfile-less npm ranges. Default: a live
+   * registry client, but only when no http was injected (hermetic tests never
+   * touch the network by accident). Pass null to disable resolution.
+   */
+  readonly registry?: NpmRegistry | null;
   /** Injected clock so the engine never reads the wall clock itself. */
   readonly clock?: () => Date;
   /** Injected pid for the atomic-write temp name. */
@@ -194,7 +202,35 @@ export async function analyzeProject(
     throwIfAborted(options.signal);
 
     const ecosystem = options.ecosystem ?? detectEcosystem(options.projectDir);
-    const parsed = parseProject(options.projectDir, ecosystem);
+    let parsed = parseProject(options.projectDir, ecosystem);
+
+    // A lockfile-less npm project still scans: ranges resolve to concrete
+    // versions from registry metadata, marked honestly in meta.warnings.
+    if (ecosystem === 'npm' && parsed.unresolved.length > 0 && options.offline !== true) {
+      const registry =
+        deps.registry === null
+          ? undefined
+          : (deps.registry ??
+            (deps.http === undefined ? createNpmRegistry({ signal: options.signal }) : undefined));
+      if (registry !== undefined) {
+        const known = new Set(parsed.packages.map((entry) => entry.name));
+        const resolution = await resolveManifestRanges(
+          options.projectDir,
+          parsed.unresolved,
+          registry,
+          options.signal,
+        );
+        parsed = {
+          ...parsed,
+          packages: sortPackageEntries([
+            ...parsed.packages,
+            ...resolution.packages.filter((entry) => !known.has(entry.name)),
+          ]),
+          unresolved: resolution.unresolved,
+          warnings: [...parsed.warnings, ...resolution.warnings],
+        };
+      }
+    }
 
     // Zero-resolved is an honest dead end, not a report: without one resolved
     // package there is nothing to query and a report would only mislead. Name
@@ -203,7 +239,7 @@ export async function analyzeProject(
       const reasons = [...new Set(parsed.unresolved.map((entry) => entry.reason))].join(', ');
       const hint =
         ecosystem === 'npm'
-          ? 'without a package-lock.json only exactly pinned versions (1.2.3) resolve; run "npm install" to create a lockfile, then scan again'
+          ? 'without a package-lock.json ranges resolve only from the npm registry (unreachable or no match here); run "npm install" to create a lockfile, then scan again'
           : 'only exact == pins in requirements.txt resolve; pin the requirements or install a lock step, then scan again';
       throw new AnalyzeError(
         'nothing-resolved',

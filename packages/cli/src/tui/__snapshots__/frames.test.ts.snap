@@ -82,7 +82,7 @@ exports[`tui golden frames (ANSI-stripped) > ecosystem picker for a mixed npm+py
   ✓ target exists  /tmp/project/vuln-ai-project                                                     
   ✓ manifest       package.json                                                                     
   ✓ ecosystem      npm                                                                              
-  ! no package-lock.json: only exact pins resolve - run npm install for a full scan                 
+  ! no package-lock.json: ranges resolve from the npm registry - npm install locks them             
   ○ ignore file: none (optional)                                                                    
                                                                                                     
   more than one ecosystem found - which should Forge scan?                                          

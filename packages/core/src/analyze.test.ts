@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   analyzeProject,
   createMemoryCache,
+  RegistryError,
   validateReport,
   type AnalyzeProgress,
 } from './index.js';
@@ -153,9 +154,10 @@ describe('analyzeProject pipeline', () => {
     }
   });
 
-  it('fails honestly with nothing-resolved when no requirement resolves (depscan-copy regression)', async () => {
-    // The owner's depscan-copy: no lockfile, every dependency a range. The old
-    // path died deep in report validation; now the engine names the failing fact.
+  it('fails honestly with nothing-resolved when nothing can resolve (depscan-copy regression)', async () => {
+    // The owner's depscan-copy: no lockfile, every dependency a range, and the
+    // registry cannot help (unreachable). The old path died deep in report
+    // validation; the engine names the failing fact instead.
     const dir = tempDir();
     writeFileSync(
       join(dir, 'package.json'),
@@ -168,7 +170,7 @@ describe('analyzeProject pipeline', () => {
 
     const result = await analyzeProject(
       { projectDir: dir, toolVersion: '0.0.0-test' },
-      { cache: createMemoryCache(), clock: CLOCK },
+      { cache: createMemoryCache(), clock: CLOCK, registry: null },
     );
 
     expect(result.ok).toBe(false);
@@ -178,6 +180,57 @@ describe('analyzeProject pipeline', () => {
       expect(result.error.message).toContain('all 2 requirement(s) are unresolved');
       expect(result.error.message).toContain('package-lock.json');
     }
+  });
+
+  it('resolves lockfile-less ranges from the registry and scans them (depscan-copy online)', async () => {
+    // His depscan-copy on an online machine: no lockfile, but the registry
+    // answers, so the scan produces a real report instead of an error.
+    const dir = tempDir();
+    writeFileSync(
+      join(dir, 'package.json'),
+      JSON.stringify({
+        name: 'depscan-copy',
+        version: '1.0.0',
+        dependencies: { lodash: '^4.17.20', minimist: '~1.2.5' },
+        devDependencies: { chalk: '*' },
+      }),
+    );
+
+    const versions: Record<string, { versions: string[]; distTags: Record<string, string> }> = {
+      lodash: { versions: ['4.17.19', '4.17.20', '4.17.21'], distTags: { latest: '4.17.21' } },
+      minimist: { versions: ['1.2.5', '1.2.8', '2.0.1'], distTags: { latest: '2.0.1' } },
+      chalk: { versions: ['4.1.2', '5.3.0'], distTags: { latest: '5.3.0' } },
+    };
+
+    const result = await analyzeProject(
+      { projectDir: dir, toolVersion: '0.0.0-test' },
+      {
+        cache: createMemoryCache(),
+        clock: CLOCK,
+        registry: {
+          metadata: (name: string) => {
+            const found = versions[name];
+            if (found === undefined) {
+              return Promise.reject(
+                new RegistryError('not-found', `no such package: ${name}`, 404),
+              );
+            }
+            return Promise.resolve(found);
+          },
+        },
+        http: { queryBatch: (queries) => Promise.resolve(queries.map(() => [])) },
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const resolved = result.report.packages.map((entry) => `${entry.name}@${entry.version}`);
+    expect(resolved).toEqual(['chalk@5.3.0', 'lodash@4.17.21', 'minimist@1.2.8']);
+    expect(result.report.meta.unresolved).toEqual([]);
+    expect(
+      result.report.meta.warnings.some((line) => line.includes('resolved from the npm registry')),
+    ).toBe(true);
+    expect(result.report.packages.find((entry) => entry.name === 'chalk')?.isDev).toBe(true);
   });
 
   it('produces a valid report for scoped packages (depscan regression: scoped parents)', async () => {

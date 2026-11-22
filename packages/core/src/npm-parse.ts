@@ -417,7 +417,9 @@ export function parseNpmManifestOnly(projectDir: string): NpmProject {
     orphans: [],
     warnings:
       unresolved.length > 0
-        ? ['no package-lock.json: only exactly pinned dependencies could be resolved']
+        ? [
+            'no package-lock.json: ranges resolve from the npm registry when reachable; npm install locks versions',
+          ]
         : [],
     unresolved,
   };

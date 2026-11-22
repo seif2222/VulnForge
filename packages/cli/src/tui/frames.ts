@@ -449,7 +449,7 @@ function startScanLines(
         fg(
           caps,
           TUI_COLORS.severityMedium,
-          '  ! no package-lock.json: only exact pins resolve - run npm install for a full scan',
+          '  ! no package-lock.json: ranges resolve from the npm registry - npm install locks them',
         ),
       );
     } else if (pf.lockfile === 'pnpm-lock.yaml') {
