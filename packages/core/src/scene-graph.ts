@@ -1,4 +1,5 @@
-import { compareSeverity, SEVERITIES } from './index.js';
+import { compareSeverity } from './severity.js';
+import { SEVERITIES } from './types.js';
 import type { Report, Severity } from './types.js';
 
 /**

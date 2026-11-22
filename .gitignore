@@ -66,3 +66,6 @@ desktop.ini
 
 # Local scratch reports (P<NN>-report.md files are intentionally committed)
 reports/*.tmp
+
+# Built dashboard assets (pnpm build regenerates them)
+packages/cli/assets/

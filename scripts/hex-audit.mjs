@@ -23,7 +23,8 @@ const SCANNED_EXT = new Set(['.ts', '.tsx', '.css', '.html', '.mts']);
 
 function* walk(dir) {
   for (const entry of readdirSync(dir)) {
-    if (entry === 'node_modules' || entry === 'dist' || entry === '.git') continue;
+    if (entry === 'node_modules' || entry === 'dist' || entry === '.git' || entry === 'assets')
+      continue;
     const path = join(dir, entry);
     if (statSync(path).isDirectory()) {
       yield* walk(path);

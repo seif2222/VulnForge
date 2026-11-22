@@ -7,6 +7,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/dist/**',
+      '**/assets/**',
       '**/coverage/**',
       '**/node_modules/**',
       '**/*.d.ts',
@@ -39,6 +40,33 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+    },
+  },
+  {
+    // The dashboard is browser code: React tsx + DOM globals, still type-checked.
+    files: ['packages/dashboard/**/*.ts', 'packages/dashboard/**/*.tsx'],
+    extends: [...tseslint.configs.recommendedTypeChecked],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.es2021 },
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      eqeqeq: ['error', 'always'],
+      '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+    },
+  },
+  {
+    // Vite's config is node code inside the dashboard package; let the node block win.
+    files: ['packages/dashboard/vite.config.ts'],
+    languageOptions: {
+      globals: globals.node,
     },
   },
   {

@@ -10,7 +10,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./dist/*": "./dist/*"
   },
   "files": [
     "dist"
