@@ -87,7 +87,11 @@ export type TuiKey =
   | { readonly type: 'enter' }
   | { readonly type: 'escape' }
   | { readonly type: 'backspace' }
-  | { readonly type: 'ctrl-c' };
+  | { readonly type: 'ctrl-c' }
+  /** A bracketed-paste burst: one insertion, never re-parsed as keys. */
+  | { readonly type: 'paste'; readonly text: string }
+  /** Ctrl+V passed through as a control byte: the app must read the OS clipboard. */
+  | { readonly type: 'paste-request' };
 
 export type TuiAction =
   | { readonly type: 'key'; readonly key: TuiKey }
@@ -95,11 +99,13 @@ export type TuiAction =
   | { readonly type: 'scan-event'; readonly event: ScanEvent }
   | { readonly type: 'scan-report'; readonly report: Report; readonly target: string }
   | { readonly type: 'report-loaded'; readonly report: Report; readonly path: string }
+  | { readonly type: 'clipboard-text'; readonly text: string }
   | { readonly type: 'tick' };
 
 export type TuiEffect =
   | { readonly type: 'probe'; readonly path: string }
   | { readonly type: 'run-scan'; readonly path: string; readonly ecosystem?: string }
+  | { readonly type: 'read-clipboard' }
   | { readonly type: 'cancel-scan' };
 
 export interface DispatchResult {
@@ -137,6 +143,18 @@ function isTerminal(model: TuiModel): boolean {
   return (TERMINAL as readonly string[]).includes(model.scan.state);
 }
 
+/** A pasted path is one line: drop control characters, keep spaces. */
+export function sanitizePaste(text: string): string {
+  let out = '';
+  for (const ch of text) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (code >= 0x20 && code !== 0x7f) {
+      out += ch;
+    }
+  }
+  return out;
+}
+
 function withScan(model: TuiModel, event: ScanEvent): TuiModel {
   const result = transition(model.scan, event);
   return result.accepted ? { ...model, scan: result.next } : model;
@@ -164,6 +182,15 @@ function handleKey(model: TuiModel, key: TuiKey): DispatchResult {
         return done({ ...model, inputFocused: false });
       case 'ctrl-c':
         return done({ ...model, inputFocused: false });
+      case 'paste':
+        return done({
+          ...model,
+          input: model.input + sanitizePaste(key.text),
+          preflight: null,
+          ecosystemChoice: null,
+        });
+      case 'paste-request':
+        return { model, effects: [{ type: 'read-clipboard' }] };
       case 'enter': {
         const target = model.input.trim();
         if (target === '' || isRunning(model)) {
@@ -202,6 +229,26 @@ function handleKey(model: TuiModel, key: TuiKey): DispatchResult {
       }
     }
     return done(model);
+  }
+
+  // A paste from anywhere lands in the scan-path input: it is the TUI's one
+  // text field, and a paste is always meant for it.
+  if (key.type === 'paste') {
+    return done({
+      ...model,
+      tab: 2,
+      liveOpen: false,
+      inputFocused: true,
+      input: model.input + sanitizePaste(key.text),
+      preflight: null,
+      ecosystemChoice: null,
+    });
+  }
+  if (key.type === 'paste-request') {
+    return {
+      model: { ...model, tab: 2, liveOpen: false, inputFocused: true },
+      effects: [{ type: 'read-clipboard' }],
+    };
   }
 
   if (key.type === 'ctrl-c') {
@@ -309,6 +356,18 @@ export function dispatch(model: TuiModel, action: TuiAction): DispatchResult {
         },
         effects: [{ type: 'run-scan', path: action.facts.target }],
       };
+    }
+
+    case 'clipboard-text': {
+      return done({
+        ...model,
+        tab: 2,
+        liveOpen: false,
+        inputFocused: true,
+        input: model.input + sanitizePaste(action.text),
+        preflight: null,
+        ecosystemChoice: null,
+      });
     }
 
     case 'scan-event': {

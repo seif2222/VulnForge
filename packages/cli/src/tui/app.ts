@@ -1,3 +1,4 @@
+import { execFile } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -19,6 +20,32 @@ import {
 } from './model.js';
 import type { RenderCapabilities } from './render3d.js';
 import { padLine } from './theme.js';
+
+/** Reads the OS clipboard for a raw Ctrl+V; null when no clipboard tool answers. */
+function readOsClipboard(): Promise<string | null> {
+  const command: readonly [string, readonly string[]] =
+    process.platform === 'win32'
+      ? ['powershell', ['-NoProfile', '-Command', 'Get-Clipboard']]
+      : process.platform === 'darwin'
+        ? ['pbpaste', []]
+        : [
+            'sh',
+            [
+              '-c',
+              'xclip -selection clipboard -o 2>/dev/null || xsel -b -o 2>/dev/null || wl-paste -n 2>/dev/null',
+            ],
+          ];
+  return new Promise((resolvePromise) => {
+    execFile(
+      command[0],
+      [...command[1]],
+      { timeout: 3000, killSignal: 'SIGKILL' },
+      (error, stdout) => {
+        resolvePromise(error !== null ? null : stdout);
+      },
+    );
+  });
+}
 
 /** SGR that paints the theme background, for terminals that can show it. */
 function backgroundSequence(caps: RenderCapabilities): string {
@@ -123,41 +150,89 @@ function probeTarget(
   return { target: dir, exists, manifest, ecosystem, lockfile, ignoreFile, ecosystems };
 }
 
-function parseKeys(chunk: Buffer): TuiKey[] {
-  const keys: TuiKey[] = [];
-  for (let i = 0; i < chunk.length; i++) {
-    const byte = chunk[i] as number;
-    if (byte === 0x03) {
-      keys.push({ type: 'ctrl-c' });
-    } else if (byte === 0x0d || byte === 0x0a) {
-      keys.push({ type: 'enter' });
-    } else if (byte === 0x7f || byte === 0x08) {
-      keys.push({ type: 'backspace' });
-    } else if (byte === 0x1b) {
-      // A CSI sequence (arrows, function keys) is consumed and ignored this pass;
-      // a lone ESC blurs the input or closes the Live Monitor.
-      if (i + 2 < chunk.length && chunk[i + 1] === 0x5b) {
-        i += 2;
-        while (i < chunk.length && ((chunk[i] as number) < 0x40 || (chunk[i] as number) > 0x7e)) {
-          i++;
+const BRACKETED_PASTE_START = Buffer.from('\u001b[200~', 'latin1');
+const BRACKETED_PASTE_END = Buffer.from('\u001b[201~', 'latin1');
+
+/**
+ * Stateful byte-to-key parser. Holds an incomplete trailing sequence (a split
+ * UTF-8 character or a bracketed paste still arriving) for the next chunk, so
+ * fast paste bursts are never mangled at a chunk boundary.
+ */
+export function createKeyParser(): (chunk: Buffer) => TuiKey[] {
+  let pending: Buffer = Buffer.alloc(0);
+  return (chunk: Buffer): TuiKey[] => {
+    const buf = pending.length > 0 ? Buffer.concat([pending, chunk]) : chunk;
+    pending = Buffer.alloc(0);
+    const keys: TuiKey[] = [];
+    let i = 0;
+    while (i < buf.length) {
+      const byte = buf[i] as number;
+      if (byte === 0x03) {
+        keys.push({ type: 'ctrl-c' });
+        i += 1;
+      } else if (byte === 0x16) {
+        // Ctrl+V arrived as a control byte: the terminal passed it through
+        // instead of pasting, so the app asks the OS clipboard itself.
+        keys.push({ type: 'paste-request' });
+        i += 1;
+      } else if (byte === 0x0d || byte === 0x0a) {
+        keys.push({ type: 'enter' });
+        i += 1;
+      } else if (byte === 0x7f || byte === 0x08) {
+        keys.push({ type: 'backspace' });
+        i += 1;
+      } else if (byte === 0x1b) {
+        if (i + 1 < buf.length && buf[i + 1] === 0x5b) {
+          if (buf.subarray(i, i + BRACKETED_PASTE_START.length).equals(BRACKETED_PASTE_START)) {
+            const end = buf.indexOf(BRACKETED_PASTE_END, i + BRACKETED_PASTE_START.length);
+            if (end === -1) {
+              pending = buf.subarray(i);
+              break;
+            }
+            keys.push({
+              type: 'paste',
+              text: buf.subarray(i + BRACKETED_PASTE_START.length, end).toString('utf8'),
+            });
+            i = end + BRACKETED_PASTE_END.length;
+            continue;
+          }
+          // Another CSI sequence (arrows, function keys): consume and ignore it.
+          let j = i + 2;
+          while (j < buf.length && ((buf[j] as number) < 0x40 || (buf[j] as number) > 0x7e)) {
+            j++;
+          }
+          if (j >= buf.length) {
+            pending = buf.subarray(i);
+            break;
+          }
+          i = j + 1;
+        } else if (i + 1 >= buf.length) {
+          keys.push({ type: 'escape' });
+          i += 1;
+        } else {
+          i += 1;
         }
-      } else if (i + 1 >= chunk.length) {
-        keys.push({ type: 'escape' });
-      }
-    } else if (byte >= 0x20) {
-      // UTF-8: copy the whole sequence.
-      let end = i + 1;
-      if (byte >= 0xf0) end = i + 4;
-      else if (byte >= 0xe0) end = i + 3;
-      else if (byte >= 0xc0) end = i + 2;
-      const text = chunk.subarray(i, Math.min(end, chunk.length)).toString('utf8');
-      i = Math.min(end, chunk.length) - 1;
-      for (const ch of text) {
-        keys.push({ type: 'char', value: ch });
+      } else if (byte >= 0x20) {
+        // UTF-8: copy the whole sequence; buffer a split character for the next chunk.
+        let end = i + 1;
+        if (byte >= 0xf0) end = i + 4;
+        else if (byte >= 0xe0) end = i + 3;
+        else if (byte >= 0xc0) end = i + 2;
+        if (end > buf.length) {
+          pending = buf.subarray(i);
+          break;
+        }
+        const text = buf.subarray(i, end).toString('utf8');
+        for (const ch of text) {
+          keys.push({ type: 'char', value: ch });
+        }
+        i = end;
+      } else {
+        i += 1;
       }
     }
-  }
-  return keys;
+    return keys;
+  };
 }
 
 function envFacts(io: CliIo, deps: CliDeps): EnvFacts {
@@ -256,6 +331,12 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
         void runScan(effect.path, effect.ecosystem);
       } else if (effect.type === 'cancel-scan') {
         scanController?.abort();
+      } else if (effect.type === 'read-clipboard') {
+        void readOsClipboard().then((text) => {
+          if (text !== null && text !== '') {
+            emit({ type: 'clipboard-text', text });
+          }
+        });
       }
     }
   };
@@ -325,14 +406,20 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
   };
 
   // Enter the alternate screen and raw mode.
-  io.stdout(bg === '' ? '\u001b[?1049h\u001b[?25l' : `\u001b[?1049h\u001b[?25l${bg}\u001b[2J`);
+  // ?2004h: ask the terminal to wrap pastes in bracketed-paste markers.
+  io.stdout(
+    bg === ''
+      ? '\u001b[?1049h\u001b[?25l\u001b[?2004h'
+      : `\u001b[?1049h\u001b[?25l\u001b[?2004h${bg}\u001b[2J`,
+  );
   if (stdin.setRawMode !== undefined) {
     stdin.setRawMode(true);
   }
   stdin.resume();
 
+  const keyParser = createKeyParser();
   const onData = (chunk: Buffer): void => {
-    for (const key of parseKeys(chunk)) {
+    for (const key of keyParser(chunk)) {
       if (!running) break;
       emit({ type: 'key', key });
     }
@@ -375,7 +462,7 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
     stdin.setRawMode(false);
   }
   stdin.pause();
-  io.stdout('\u001b[?25h\u001b[?1049l');
+  io.stdout('\u001b[?2004l\u001b[?25h\u001b[?1049l');
   if (cancelled) {
     return EXIT_CODES.cancelled;
   }

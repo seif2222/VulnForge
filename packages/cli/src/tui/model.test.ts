@@ -164,6 +164,42 @@ describe('tui model reducer', () => {
     ]);
   });
 
+  it('a paste into the focused input inserts the text as-is', () => {
+    let model = dispatch(start(), { type: 'key', key: char('s') }).model;
+    model = dispatch(model, {
+      type: 'key',
+      key: { type: 'paste', text: 'E:\\Pref\\deps 1' },
+    }).model;
+    expect(model.input).toBe('E:\\Pref\\deps 1');
+  });
+
+  it('a paste from any tab routes to the scan input and focuses it', () => {
+    const model = dispatch(start(), {
+      type: 'key',
+      key: { type: 'paste', text: 'E:\\Pref\\depscan' },
+    }).model;
+    expect(model.tab).toBe(2);
+    expect(model.inputFocused).toBe(true);
+    expect(model.input).toBe('E:\\Pref\\depscan');
+  });
+
+  it('paste strips line breaks and control characters', () => {
+    const model = dispatch(start(), {
+      type: 'key',
+      key: { type: 'paste', text: 'E:\\Pref\r\ndeps\tcan' },
+    }).model;
+    expect(model.input).toBe('E:\\Prefdepscan');
+  });
+
+  it('a raw Ctrl+V asks for the OS clipboard; the answer lands in the input', () => {
+    const requested = dispatch(start(), { type: 'key', key: { type: 'paste-request' } });
+    expect(requested.effects).toEqual([{ type: 'read-clipboard' }]);
+    expect(requested.model.tab).toBe(2);
+    expect(requested.model.inputFocused).toBe(true);
+    const pasted = dispatch(requested.model, { type: 'clipboard-text', text: 'E:\\Pref\\depscan' });
+    expect(pasted.model.input).toBe('E:\\Pref\\depscan');
+  });
+
   it('query progress feeds counters, the package trail and the event log', () => {
     let model = dispatch(start(), preflightOk).model;
     model = dispatch(model, {
