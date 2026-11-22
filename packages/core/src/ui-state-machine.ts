@@ -30,6 +30,7 @@ export type ScanEvent =
   | { readonly type: 'scan-completed' }
   | { readonly type: 'scan-failed'; readonly message: string }
   | { readonly type: 'scan-cancelled' }
+  | { readonly type: 'acknowledge' }
   | { readonly type: 'reset' };
 
 /** The six Forge agent states from the approved design brief. */
@@ -84,7 +85,7 @@ export interface TransitionResult {
  *   scanning  -> scanning (query-progress), analyzing (ai-started), detected,
  *                completed, error, cancelled
  *   analyzing -> detected, completed, error, cancelled
- *   detected  -> scanning/analyzing (further progress), completed, error, cancelled
+ *   detected  -> scanning/analyzing (further progress), completed (acknowledge), error, cancelled
  *   completed/error/cancelled -> idle (reset), scanning (scan-started, a new run)
  */
 export function transition(current: UiScanState, event: ScanEvent): TransitionResult {
@@ -150,6 +151,14 @@ export function transition(current: UiScanState, event: ScanEvent): TransitionRe
     case 'scan-cancelled':
       if (isRunning(current.state)) {
         return accept({ ...current, state: 'cancelled' });
+      }
+      return reject(current);
+
+    case 'acknowledge':
+      // The user has seen the DETECTED result and moves on to the findings: the run
+      // is over, so the Live Monitor releases the screen. Findings stay in the session.
+      if (current.state === 'detected') {
+        return accept({ ...current, state: 'completed' });
       }
       return reject(current);
 

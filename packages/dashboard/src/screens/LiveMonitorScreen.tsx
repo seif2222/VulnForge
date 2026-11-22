@@ -17,8 +17,11 @@ const ScanFieldSceneLazy = lazy(() =>
  * events arrive; the counters carry the same numbers as text. No invented scan
  * IDs, no simulated activity.
  */
-export function LiveMonitorScreen(props: { readonly session: ScanSession }) {
-  const { session } = props;
+export function LiveMonitorScreen(props: {
+  readonly session: ScanSession;
+  readonly onOpenFindings: () => void;
+}) {
+  const { session, onOpenFindings } = props;
   const { ui } = session;
   const agentState = agentStateFor(ui.state);
   const reducedMotion = usePrefersReducedMotion();
@@ -51,6 +54,25 @@ export function LiveMonitorScreen(props: { readonly session: ScanSession }) {
         <p className="mono muted">
           {ui.lastPackage === null ? 'waiting for the first query…' : `queried: ${ui.lastPackage}`}
         </p>
+        {ui.state === 'detected' && (
+          <div className="form-actions">
+            <p className="mono muted">
+              scan finished
+              {session.report === null
+                ? ''
+                : ` · ${String(session.report.stats.totalVulnerabilities)} finding(s)`}
+            </p>
+            <button
+              type="button"
+              className="primary"
+              onClick={() => {
+                session.acknowledge();
+                onOpenFindings();
+              }}>
+              view findings
+            </button>
+          </div>
+        )}
         {(ui.state === 'scanning' || ui.state === 'analyzing') && (
           <div className="form-actions">
             <button type="button" className="primary" onClick={session.cancel}>

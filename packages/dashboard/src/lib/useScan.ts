@@ -18,6 +18,7 @@ export interface ScanSession {
   readonly structureUnavailable: boolean;
   readonly launch: (projectPath: string, aiExplanations: boolean) => void;
   readonly cancel: () => void;
+  readonly acknowledge: () => void;
   readonly reset: () => void;
 }
 
@@ -174,6 +175,10 @@ export function useScan(): ScanSession {
     cancelRef.current?.();
   }, []);
 
+  const acknowledge = useCallback(() => {
+    setUi((current) => transition(current, { type: 'acknowledge' }).next);
+  }, []);
+
   const reset = useCallback(() => {
     setScannedPackages([]);
     setStructure(null);
@@ -192,6 +197,7 @@ export function useScan(): ScanSession {
     structureUnavailable,
     launch,
     cancel,
+    acknowledge,
     reset,
   };
 }

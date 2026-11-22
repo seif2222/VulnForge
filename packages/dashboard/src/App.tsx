@@ -154,7 +154,7 @@ export function App() {
       </aside>
       <main className="screen">
         {live ? (
-          <LiveMonitorScreen session={session} />
+          <LiveMonitorScreen session={session} onOpenFindings={() => setTab('findings')} />
         ) : tab === 'overview' ? (
           <OverviewScreen session={session} />
         ) : tab === 'analytics' ? (

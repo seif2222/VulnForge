@@ -141,3 +141,15 @@ describe('ui state machine', () => {
     expect(agentStateFor('cancelled')).toBe('idle');
   });
 });
+
+describe('acknowledge', () => {
+  it('releases the Live Monitor from detected, keeping the severity; rejected elsewhere', () => {
+    const detected = transition(started.next, { type: 'detected', severity: 'high' });
+    const ack = transition(detected.next, { type: 'acknowledge' });
+    expect(ack.accepted).toBe(true);
+    expect(ack.next.state).toBe('completed');
+    expect(ack.next.detectedSeverity).toBe('high');
+    expect(transition(started.next, { type: 'acknowledge' }).accepted).toBe(false);
+    expect(transition(ack.next, { type: 'reset' }).accepted).toBe(true);
+  });
+});
