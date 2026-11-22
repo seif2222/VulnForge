@@ -66,6 +66,39 @@ exports[`tui golden frames (ANSI-stripped) > dependency tree at 100x30 1`] = `
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
 `;
 
+exports[`tui golden frames (ANSI-stripped) > ecosystem picker for a mixed npm+pypi project at 100x30 1`] = `
+" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+ Start New Scan                                                                                     
+                                                                                                    
+  ┌──────────────────────────────────────────────────────────────────────┐                          
+  │                                                                      │                          
+  └──────────────────────────────────────────────────────────────────────┘                          
+                                                                                                    
+  type a project path, then enter to scan (absolute or relative to cwd)                             
+                                                                                                    
+  Preflight                                                                                         
+  ✓ target exists  /tmp/project/vuln-ai-project                                                     
+  ✓ manifest       package.json                                                                     
+  ✓ ecosystem      npm                                                                              
+  ! no package-lock.json: only exact pins resolve - run npm install for a full scan                 
+  ○ ignore file: none (optional)                                                                    
+                                                                                                    
+  more than one ecosystem found - which should Forge scan?                                          
+   [1] npm     package.json                                                                         
+   [2] pypi    requirements.txt                                                                     
+                                                                                                    
+  press 1 or 2 to scan that ecosystem · esc to cancel                                               
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ 1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
+`;
+
 exports[`tui golden frames (ANSI-stripped) > findings at 100x30 1`] = `
 " VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
 ────────────────────────────────────────────────────────────────────────────────────────────────────

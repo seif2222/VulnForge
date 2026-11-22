@@ -466,6 +466,29 @@ function startScanLines(
         ? dim(caps, '  ○ ignore file: none (optional)')
         : factLine(caps, 'ignore file', true, pf.ignoreFile),
     );
+    if (model.ecosystemChoice !== null) {
+      const MANIFEST_FOR: Record<string, string> = {
+        npm: 'package.json',
+        pypi: 'requirements.txt',
+      };
+      lines.push('');
+      lines.push(
+        bold(caps, '  more than one ecosystem found') + dim(caps, ' - which should Forge scan?'),
+      );
+      model.ecosystemChoice.options.forEach((eco, i) => {
+        lines.push(
+          `   ${fg(caps, TUI_COLORS.accent, `[${i + 1}]`)} ${bold(caps, eco)}${' '.repeat(Math.max(1, 8 - eco.length))}${dim(caps, MANIFEST_FOR[eco] ?? '')}`,
+        );
+      });
+      lines.push('');
+      lines.push(
+        dim(caps, '  press ') +
+          fg(caps, TUI_COLORS.accent, '1') +
+          dim(caps, ' or ') +
+          fg(caps, TUI_COLORS.accent, '2') +
+          dim(caps, ' to scan that ecosystem · esc to cancel'),
+      );
+    }
     if (!pf.exists || pf.manifest === null) {
       lines.push('');
       lines.push(

@@ -60,6 +60,7 @@ function runningModel(): TuiModel {
       ecosystem: 'npm',
       lockfile: 'package-lock.json',
       ignoreFile: null,
+      ecosystems: ['npm'],
     },
   }).model;
   const packages = ['express@4.17.1', 'lodash@4.17.20', 'minimist@1.2.5'];
@@ -140,6 +141,24 @@ describe('tui golden frames (ANSI-stripped)', () => {
         ecosystem: null,
         lockfile: null,
         ignoreFile: null,
+        ecosystems: [],
+      },
+    }).model;
+    const frame = composeFrame(model, 100, 30, CAPS, 0);
+    expect(stripAnsi(frame.join('\n'))).toMatchSnapshot();
+  });
+
+  it('ecosystem picker for a mixed npm+pypi project at 100x30', () => {
+    const model = dispatch(initialModel(ENV), {
+      type: 'preflight',
+      facts: {
+        target: '/tmp/project/vuln-ai-project',
+        exists: true,
+        manifest: 'package.json',
+        ecosystem: 'npm',
+        lockfile: null,
+        ignoreFile: null,
+        ecosystems: ['npm', 'pypi'],
       },
     }).model;
     const frame = composeFrame(model, 100, 30, CAPS, 0);

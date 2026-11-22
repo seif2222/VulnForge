@@ -36,6 +36,8 @@ export interface PreflightFacts {
   /** The npm lockfile when present; 'pnpm-lock.yaml' when only pnpm's exists. */
   readonly lockfile: string | null;
   readonly ignoreFile: string | null;
+  /** Every ecosystem detected in the target (length > 1 means the user picks). */
+  readonly ecosystems: readonly string[];
 }
 
 export interface EnvFacts {
@@ -72,6 +74,11 @@ export interface TuiModel {
   readonly queriedPackages: readonly string[];
   readonly sessionRuns: readonly SessionRun[];
   readonly env: EnvFacts;
+  /** When set, the Start New Scan view asks which ecosystem to scan. */
+  readonly ecosystemChoice: {
+    readonly target: string;
+    readonly options: readonly string[];
+  } | null;
   readonly quit: boolean;
 }
 
@@ -92,7 +99,7 @@ export type TuiAction =
 
 export type TuiEffect =
   | { readonly type: 'probe'; readonly path: string }
-  | { readonly type: 'run-scan'; readonly path: string }
+  | { readonly type: 'run-scan'; readonly path: string; readonly ecosystem?: string }
   | { readonly type: 'cancel-scan' };
 
 export interface DispatchResult {
@@ -114,6 +121,7 @@ export function initialModel(env: EnvFacts): TuiModel {
     queriedPackages: [],
     sessionRuns: [],
     env,
+    ecosystemChoice: null,
     quit: false,
   };
 }
@@ -139,9 +147,19 @@ function handleKey(model: TuiModel, key: TuiKey): DispatchResult {
   if (model.inputFocused) {
     switch (key.type) {
       case 'char':
-        return done({ ...model, input: model.input + key.value, preflight: null });
+        return done({
+          ...model,
+          input: model.input + key.value,
+          preflight: null,
+          ecosystemChoice: null,
+        });
       case 'backspace':
-        return done({ ...model, input: model.input.slice(0, -1), preflight: null });
+        return done({
+          ...model,
+          input: model.input.slice(0, -1),
+          preflight: null,
+          ecosystemChoice: null,
+        });
       case 'escape':
         return done({ ...model, inputFocused: false });
       case 'ctrl-c':
@@ -159,6 +177,31 @@ function handleKey(model: TuiModel, key: TuiKey): DispatchResult {
         };
       }
     }
+  }
+
+  // The ecosystem picker owns keys while open.
+  if (model.ecosystemChoice !== null) {
+    if (key.type === 'escape' || key.type === 'ctrl-c') {
+      return done({ ...model, ecosystemChoice: null });
+    }
+    if (key.type === 'char' && key.value >= '1' && key.value <= '9') {
+      const index = Number(key.value) - 1;
+      const picked = model.ecosystemChoice.options[index];
+      if (picked !== undefined) {
+        const target = model.ecosystemChoice.target;
+        return {
+          model: {
+            ...withScan(model, { type: 'scan-started', target, startedAt: clockNow() }),
+            liveOpen: true,
+            eventLog: [],
+            queriedPackages: [],
+            ecosystemChoice: null,
+          },
+          effects: [{ type: 'run-scan', path: target, ecosystem: picked }],
+        };
+      }
+    }
+    return done(model);
   }
 
   if (key.type === 'ctrl-c') {
@@ -241,6 +284,16 @@ export function dispatch(model: TuiModel, action: TuiAction): DispatchResult {
       if (!action.facts.exists || action.facts.manifest === null || isRunning(model)) {
         // Blocked honestly: the Start New Scan screen shows the failing fact.
         return done({ ...model, preflight: action.facts, tab: 2 });
+      }
+      if (action.facts.ecosystems.length > 1) {
+        // Mixed project: the user picks the ecosystem before anything runs.
+        return done({
+          ...model,
+          preflight: action.facts,
+          tab: 2,
+          liveOpen: false,
+          ecosystemChoice: { target: action.facts.target, options: action.facts.ecosystems },
+        });
       }
       return {
         model: {

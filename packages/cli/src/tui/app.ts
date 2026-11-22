@@ -53,6 +53,7 @@ function probeTarget(
   readonly ecosystem: string | null;
   readonly lockfile: string | null;
   readonly ignoreFile: string | null;
+  readonly ecosystems: readonly string[];
 } {
   const dir = resolve(cwd, target);
   const exists = existsSync(dir);
@@ -75,7 +76,16 @@ function probeTarget(
   }
   const ignoreFile =
     exists && existsSync(join(dir, '.vulnforgeignore')) ? join(dir, '.vulnforgeignore') : null;
-  return { target: dir, exists, manifest, ecosystem, lockfile, ignoreFile };
+  const ecosystems: string[] = [];
+  if (exists) {
+    if (existsSync(join(dir, 'package.json')) || existsSync(join(dir, 'package-lock.json'))) {
+      ecosystems.push('npm');
+    }
+    if (existsSync(join(dir, 'requirements.txt'))) {
+      ecosystems.push('pypi');
+    }
+  }
+  return { target: dir, exists, manifest, ecosystem, lockfile, ignoreFile, ecosystems };
 }
 
 function parseKeys(chunk: Buffer): TuiKey[] {
@@ -199,7 +209,7 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
         model = result.model;
         apply(result.effects);
       } else if (effect.type === 'run-scan') {
-        void runScan(effect.path);
+        void runScan(effect.path, effect.ecosystem);
       } else if (effect.type === 'cancel-scan') {
         scanController?.abort();
       }
@@ -219,7 +229,7 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
     paint();
   };
 
-  const runScan = async (target: string): Promise<void> => {
+  const runScan = async (target: string, ecosystem?: string): Promise<void> => {
     const controller = new AbortController();
     scanController = controller;
     const cache =
@@ -231,6 +241,7 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
       {
         projectDir: target,
         toolVersion: io.version,
+        ...(ecosystem === 'npm' || ecosystem === 'pypi' ? { ecosystem } : {}),
         onProgress: (progress) => {
           emit({
             type: 'scan-event',
@@ -257,7 +268,11 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
         cancelled = true;
         emit({ type: 'scan-event', event: { type: 'scan-cancelled' } });
       } else {
-        emit({ type: 'scan-event', event: { type: 'scan-failed', message: result.error.message } });
+        const message =
+          result.error.code === 'ambiguous-ecosystem'
+            ? 'this project mixes npm and Python manifests - press r and pick an ecosystem from the chooser before scanning'
+            : result.error.message;
+        emit({ type: 'scan-event', event: { type: 'scan-failed', message } });
       }
       return;
     }

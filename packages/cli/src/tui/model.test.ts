@@ -34,6 +34,21 @@ const preflightOk = {
     ecosystem: 'npm',
     lockfile: 'package-lock.json',
     ignoreFile: null,
+    ecosystems: ['npm'],
+  },
+};
+
+// Shaped like the owner's vuln-ai-project: npm and Python side by side.
+const preflightMixed = {
+  type: 'preflight' as const,
+  facts: {
+    target: '/tmp/project/vuln-ai-project',
+    exists: true,
+    manifest: 'package.json',
+    ecosystem: 'npm',
+    lockfile: null,
+    ignoreFile: null,
+    ecosystems: ['npm', 'pypi'],
   },
 };
 
@@ -109,12 +124,44 @@ describe('tui model reducer', () => {
         ecosystem: null,
         lockfile: null,
         ignoreFile: null,
+        ecosystems: [],
       },
     });
     expect(blocked.effects).toEqual([]);
     expect(blocked.model.scan.state).toBe('idle');
     expect(blocked.model.preflight?.exists).toBe(false);
     expect(blocked.model.tab).toBe(2);
+  });
+
+  it('opens an ecosystem picker instead of auto-running a mixed project', () => {
+    const result = dispatch(start(), preflightMixed);
+    expect(result.effects).toEqual([]);
+    expect(result.model.ecosystemChoice).toEqual({
+      target: '/tmp/project/vuln-ai-project',
+      options: ['npm', 'pypi'],
+    });
+    expect(result.model.tab).toBe(2);
+    expect(result.model.scan.state).toBe('idle');
+  });
+
+  it('a digit in the picker launches the chosen ecosystem; escape cancels', () => {
+    const cancelled = dispatch(dispatch(start(), preflightMixed).model, {
+      type: 'key',
+      key: { type: 'escape' },
+    });
+    expect(cancelled.model.ecosystemChoice).toBeNull();
+    expect(cancelled.effects).toEqual([]);
+
+    const picked = dispatch(dispatch(start(), preflightMixed).model, {
+      type: 'key',
+      key: char('2'),
+    });
+    expect(picked.model.ecosystemChoice).toBeNull();
+    expect(picked.model.scan.state).toBe('scanning');
+    expect(picked.model.liveOpen).toBe(true);
+    expect(picked.effects).toEqual([
+      { type: 'run-scan', path: '/tmp/project/vuln-ai-project', ecosystem: 'pypi' },
+    ]);
   });
 
   it('query progress feeds counters, the package trail and the event log', () => {
