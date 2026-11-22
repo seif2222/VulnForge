@@ -95,7 +95,10 @@ describe('parseArgs', () => {
     expect(parseArgs(['--help'])).toEqual({ kind: 'help' });
     expect(parseArgs(['analyze', '--help'])).toEqual({ kind: 'help' });
     expect(parseArgs(['--version'])).toEqual({ kind: 'version' });
-    expect(parseArgs(['dashboard'])).toEqual({ kind: 'planned', command: 'dashboard' });
+    expect(parseArgs(['dashboard'])).toEqual({
+      kind: 'dashboard',
+      flags: { command: 'dashboard', reportPath: null, port: null, quiet: false },
+    });
     expect(parseArgs(['ui'])).toEqual({ kind: 'planned', command: 'ui' });
   });
 });

@@ -22,11 +22,20 @@ export interface AnalyzeFlags {
 
 export type ParsedArgs =
   | { readonly kind: 'analyze'; readonly flags: AnalyzeFlags }
+  | { readonly kind: 'dashboard'; readonly flags: DashboardFlags }
   | { readonly kind: 'help' }
   | { readonly kind: 'version' }
   | { readonly kind: 'bare' }
-  | { readonly kind: 'planned'; readonly command: 'dashboard' | 'ui' }
+  | { readonly kind: 'planned'; readonly command: 'ui' }
   | { readonly kind: 'usage-error'; readonly message: string };
+
+export interface DashboardFlags {
+  readonly command: 'dashboard';
+  /** Optional report file served at startup; validated once when the server boots. */
+  readonly reportPath: string | null;
+  readonly port: number | null;
+  readonly quiet: boolean;
+}
 
 const VALUE_FLAGS = [
   '--out',
@@ -65,8 +74,36 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   if (first === '--version' || first === '-v' || first === 'version') {
     return { kind: 'version' };
   }
-  if (first === 'dashboard' || first === 'ui') {
+  if (first === 'ui') {
     return { kind: 'planned', command: first };
+  }
+  if (first === 'dashboard') {
+    let reportPath: string | null = null;
+    let port: number | null = null;
+    let quiet = false;
+    for (let i = 0; i < rest.length; i++) {
+      const arg = rest[i];
+      if (arg === '--quiet') {
+        quiet = true;
+      } else if (arg === '--port') {
+        const value = rest[++i];
+        const parsed = value === undefined ? Number.NaN : Number.parseInt(value, 10);
+        if (!Number.isInteger(parsed) || parsed < 0 || parsed > 65535) {
+          return usageError('--port needs a port number (0-65535; 0 picks a free port)');
+        }
+        port = parsed;
+      } else if (arg !== undefined && arg.startsWith('-')) {
+        return usageError(`unknown dashboard flag: ${arg}`);
+      } else if (arg !== undefined && reportPath === null) {
+        reportPath = arg;
+      } else {
+        return usageError('dashboard takes at most one report file');
+      }
+    }
+    return {
+      kind: 'dashboard',
+      flags: { command: 'dashboard', reportPath, port, quiet },
+    };
   }
   if (first !== 'analyze' && first !== 'scan') {
     return usageError(`unknown command: ${first}`);

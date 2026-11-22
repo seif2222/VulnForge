@@ -291,7 +291,7 @@ describe('runCli command handling', () => {
   });
 
   it('planned commands exit 2 with a clear message', async () => {
-    const { code, stderr } = await run(['dashboard'], tempDir());
+    const { code, stderr } = await run(['ui'], tempDir());
     expect(code).toBe(EXIT_CODES.usage);
     expect(stderr).toContain('not available in this build');
   });

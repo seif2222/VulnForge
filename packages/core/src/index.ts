@@ -137,3 +137,34 @@ export type {
   AnalyzeProgress,
   AnalyzeResult,
 } from './analyze.js';
+
+export { buildDependencyGraph } from './scene-graph.js';
+export type { DependencyGraph, SceneEdge, SceneNode } from './scene-graph.js';
+
+export {
+  AGENT_STATES,
+  INITIAL_UI_STATE,
+  UI_STATES,
+  agentStateFor,
+  transition,
+} from './ui-state-machine.js';
+export type {
+  AgentState,
+  ScanEvent,
+  TransitionResult,
+  UiScanState,
+  UiState,
+} from './ui-state-machine.js';
+
+export { buildFindingsModel, buildOverviewModel, historyEntryFromReport } from './view-adapters.js';
+export type {
+  DistributionRow,
+  FindingRow,
+  FindingsModel,
+  OverviewModel,
+  PostureHeader,
+  PriorityRow,
+  ScanHistoryEntry,
+  StatCard,
+  TopPackageRow,
+} from './view-adapters.js';

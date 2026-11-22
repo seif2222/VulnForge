@@ -20,7 +20,8 @@ import {
 } from '@vulnforge/forge';
 
 import { EXIT_CODES } from './exit-codes.js';
-import { parseArgs, type AnalyzeFlags } from './args.js';
+import { DashboardError, startDashboardServer } from './dashboard-server.js';
+import { parseArgs, type AnalyzeFlags, type DashboardFlags } from './args.js';
 import {
   ProgressRenderer,
   colorEnabled,
@@ -243,6 +244,45 @@ async function runAnalyze(flags: AnalyzeFlags, io: CliIo, deps: CliDeps): Promis
   return decideExitCode(report, flags);
 }
 
+/**
+ * Runs the dashboard server until SIGINT/SIGTERM. The URL and lifecycle messages go to
+ * stderr (never stdout - stdout is reserved for report output). Exit 6 on any dashboard
+ * startup failure; 130 when the user interrupts.
+ */
+async function runDashboard(flags: DashboardFlags, io: CliIo): Promise<number> {
+  const assetsRoot = resolve(import.meta.dirname, '..', 'assets', 'dashboard');
+  const server = await startDashboardServer({
+    port: flags.port ?? undefined,
+    reportPath: flags.reportPath ?? undefined,
+    assetsRoot,
+    toolVersion: io.version,
+    aiAvailable:
+      loadForgeConfig({
+        VULNFORGE_AI_BASE_URL: io.env.VULNFORGE_AI_BASE_URL,
+        VULNFORGE_AI_MODEL: io.env.VULNFORGE_AI_MODEL,
+        VULNFORGE_AI_API_KEY: io.env.VULNFORGE_AI_API_KEY,
+        VULNFORGE_AI_TIMEOUT_MS: io.env.VULNFORGE_AI_TIMEOUT_MS,
+      }) !== null,
+  });
+  if (!flags.quiet) {
+    io.stderr(`vulnforge dashboard listening at ${server.url}\n`);
+    io.stderr('press ctrl+c to stop\n');
+  }
+
+  const interrupted = await new Promise<boolean>((resolvePromise) => {
+    const onSigint = (): void => {
+      resolvePromise(true);
+    };
+    const onSigterm = (): void => {
+      resolvePromise(false);
+    };
+    process.once('SIGINT', onSigint);
+    process.once('SIGTERM', onSigterm);
+  });
+  await server.close();
+  return interrupted ? EXIT_CODES.cancelled : EXIT_CODES.success;
+}
+
 /** Runs the CLI and resolves with the process exit code. */
 export async function runCli(
   argv: readonly string[],
@@ -266,6 +306,17 @@ export async function runCli(
         `${parsed.command} is not available in this build - it lands in the dashboard/TUI phase.\n`,
       );
       return EXIT_CODES.usage;
+    case 'dashboard':
+      try {
+        return await runDashboard(parsed.flags, io);
+      } catch (error) {
+        if (error instanceof DashboardError) {
+          io.stderr(`error: ${error.message}\n`);
+          return EXIT_CODES.dashboard;
+        }
+        io.stderr(`error: internal: ${error instanceof Error ? error.message : String(error)}\n`);
+        return EXIT_CODES.internal;
+      }
     case 'usage-error':
       io.stderr(`error: ${parsed.message}\n\n${usage(io.version)}\n`);
       return EXIT_CODES.usage;
