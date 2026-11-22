@@ -19,6 +19,9 @@ export interface UnidentifiedAdvisory {
 }
 
 /** Real progress for one answered OSV query. `done` never goes backwards. */
+/** Parallel /v1/vulns/{id} hydrations after a cold querybatch. */
+const HYDRATE_CONCURRENCY = 8;
+
 export interface MatchProgress {
   readonly done: number;
   readonly total: number;
@@ -515,26 +518,41 @@ export async function matchVulnerabilities(
 
         // querybatch can answer with stub records that carry no `affected` data; those
         // are hydrated one by one through /v1/vulns/{id} when the client supports it.
-        const hydrated = await Promise.all(
-          fetched.map(async (vulns) =>
-            Promise.all(
-              vulns.map(async (record) => {
-                if (record.affected !== undefined || http.getVuln === undefined) {
-                  return record;
-                }
-                try {
-                  const id = record.id;
-                  if (typeof id !== 'string') {
-                    return record;
-                  }
-                  return await http.getVuln(id);
-                } catch {
-                  // Keep the stub: the finding reports affectedRange 'unknown' rather
-                  // than dropping the advisory.
-                  return record;
-                }
-              }),
-            ),
+        // Unique ids only (one advisory often hits many packages), fetched through a
+        // small pool: an unbounded fan-out floods osv.dev with 429s and timeouts.
+        const stubIds = new Set<string>();
+        for (const vulns of fetched) {
+          for (const record of vulns) {
+            if (record.affected === undefined && typeof record.id === 'string') {
+              stubIds.add(record.id);
+            }
+          }
+        }
+        const full = new Map<string, OsvVulnerability>();
+        const getVuln = http.getVuln?.bind(http);
+        if (getVuln !== undefined) {
+          const queue = [...stubIds];
+          let next = 0;
+          const worker = async (): Promise<void> => {
+            while (next < queue.length) {
+              const id = queue[next++] as string;
+              try {
+                full.set(id, await getVuln(id));
+              } catch {
+                // Keep the stub: the finding reports affectedRange 'unknown' rather
+                // than dropping the advisory.
+              }
+            }
+          };
+          await Promise.all(
+            Array.from({ length: Math.min(HYDRATE_CONCURRENCY, queue.length) }, () => worker()),
+          );
+        }
+        const hydrated = fetched.map((vulns) =>
+          vulns.map((record) =>
+            record.affected !== undefined || typeof record.id !== 'string'
+              ? record
+              : (full.get(record.id) ?? record),
           ),
         );
 
