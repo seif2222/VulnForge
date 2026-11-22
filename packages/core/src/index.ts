@@ -59,6 +59,13 @@ export {
   parseNpm,
   parseNpmManifestOnly,
 } from './npm-parse.js';
+export {
+  PNPM_LOCKFILE,
+  SUPPORTED_PNPM_LOCKFILE_VERSIONS,
+  hasPnpmLockfile,
+  parsePnpm,
+  stripPeerSuffix,
+} from './pnpm-parse.js';
 export type { NpmProject } from './npm-parse.js';
 
 export { normalizePythonName, parsePython } from './python-parse.js';

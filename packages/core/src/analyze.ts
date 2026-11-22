@@ -5,6 +5,7 @@ import { isProjectParseError, ProjectParseError } from './errors.js';
 import { applyIgnores, parseIgnoreFile, rulesFromFlags, type IgnoreRule } from './ignore.js';
 import { matchVulnerabilities, type MatchProgress } from './match.js';
 import { hasNpmLockfile, parseNpm, parseNpmManifestOnly } from './npm-parse.js';
+import { hasPnpmLockfile, parsePnpm } from './pnpm-parse.js';
 import { createNpmRegistry, resolveManifestRanges, type NpmRegistry } from './npm-registry.js';
 import { sortPackageEntries } from './package-key.js';
 import type { OsvCache } from './osv-cache.js';
@@ -142,7 +143,9 @@ function parseProject(projectDir: string, ecosystem: Ecosystem): ParsedProject {
 
   const project = hasNpmLockfile(projectDir)
     ? parseNpm(projectDir)
-    : parseNpmManifestOnly(projectDir);
+    : hasPnpmLockfile(projectDir)
+      ? parsePnpm(projectDir)
+      : parseNpmManifestOnly(projectDir);
   return {
     projectName: project.projectName,
     manifestPath: project.manifestPath,

@@ -452,14 +452,6 @@ function startScanLines(
           '  ! no package-lock.json: ranges resolve from the npm registry - npm install locks them',
         ),
       );
-    } else if (pf.lockfile === 'pnpm-lock.yaml') {
-      lines.push(
-        fg(
-          caps,
-          TUI_COLORS.severityMedium,
-          '  ! pnpm-lock.yaml is not readable yet - run npm install --package-lock-only first',
-        ),
-      );
     }
     lines.push(
       pf.ignoreFile === null

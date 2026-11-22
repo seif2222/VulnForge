@@ -182,6 +182,74 @@ describe('analyzeProject pipeline', () => {
     }
   });
 
+  it('reads the full tree from pnpm-lock.yaml when there is no package-lock.json', async () => {
+    // The owner's projects use pnpm: the lockfile must unlock the transitive
+    // tree, no registry round-trip needed.
+    const dir = tempDir();
+    writeFileSync(
+      join(dir, 'package.json'),
+      JSON.stringify({
+        name: 'pnpm-app',
+        version: '1.0.0',
+        dependencies: { leftpad: '^1.0.0' },
+      }),
+    );
+    writeFileSync(
+      join(dir, 'pnpm-lock.yaml'),
+      [
+        "lockfileVersion: '9.0'",
+        '',
+        'importers:',
+        '',
+        '  .:',
+        '    dependencies:',
+        '      leftpad:',
+        '        specifier: ^1.0.0',
+        '        version: 1.0.0',
+        '',
+        'packages:',
+        '',
+        "  'leftpad@1.0.0':",
+        '    resolution: {integrity: sha512-AAA==}',
+        '',
+        "  'rightpad@2.1.0':",
+        '    resolution: {integrity: sha512-BBB==}',
+        '',
+        'snapshots:',
+        '',
+        "  'leftpad@1.0.0':",
+        '    dependencies:',
+        '      rightpad: 2.1.0',
+        '',
+        "  'rightpad@2.1.0': {}",
+        '',
+      ].join('\n'),
+    );
+
+    let registryCalled = false;
+    const result = await analyzeProject(
+      { projectDir: dir, toolVersion: '0.0.0-test' },
+      {
+        cache: createMemoryCache(),
+        clock: CLOCK,
+        registry: {
+          metadata: () => {
+            registryCalled = true;
+            return Promise.reject(new RegistryError('network-unavailable', 'must not be called'));
+          },
+        },
+        http: { queryBatch: (queries) => Promise.resolve(queries.map(() => [])) },
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const ids = result.report.packages.map((entry) => `${entry.name}@${entry.version}`);
+    expect(ids).toEqual(['leftpad@1.0.0', 'rightpad@2.1.0']);
+    expect(registryCalled).toBe(false);
+    expect(result.report.stats.transitivePackages).toBe(1);
+  });
+
   it('resolves lockfile-less ranges from the registry and scans them (depscan-copy online)', async () => {
     // His depscan-copy on an online machine: no lockfile, but the registry
     // answers, so the scan produces a real report instead of an error.
