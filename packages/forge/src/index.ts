@@ -26,3 +26,14 @@ export {
   type SuggestDeps,
   type SuggestResult,
 } from './suggest.js';
+
+export {
+  scanSource,
+  extractCFunctions,
+  validateSourceEndpoint,
+  SOURCE_CONTRACT,
+  SOURCE_THRESHOLD,
+  type SourceReport,
+  type SourceFunction,
+  type SourcePrediction,
+} from './source.js';

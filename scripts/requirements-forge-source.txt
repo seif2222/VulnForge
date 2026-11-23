@@ -1,0 +1,9 @@
+# Optional inference environment only. Not part of the scanner's Node install.
+# Python 3.11 recommended. Install the appropriate CPU/CUDA torch wheel first.
+# These ranges require a real hardware rehearsal before being called supported.
+torch>=2.6,<3
+transformers>=4.51,<5
+peft>=0.15,<1
+accelerate>=1.6,<2
+safetensors>=0.5,<1
+bitsandbytes>=0.45,<1

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Forge: the optional AI explanation and suggestion layer. Explains and suggests only - never creates findings.",
+  "description": "Forge: optional explanations and suggestions, plus an experimental source classifier with separate unconfirmed predictions.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
