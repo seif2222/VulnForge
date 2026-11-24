@@ -4,9 +4,14 @@
 
 Opt-in `source` command, independent from `scan`, TUI and dashboard. The existing
 OSV report schema, CVE counts and `--fail-on` are unchanged. Output goes to a
-separate JSON report. The HTTP pipeline is testable with mocks. Actual adapter
-loading, GPU memory, latency and model scores are NOT verified until weights
-arrive. Tests using a mock do not measure Forge accuracy.
+separate JSON report. The HTTP pipeline is testable with mocks. Tests using a
+mock do not measure Forge accuracy.
+
+Adapter status (Nov 25, 2026): the real adapter has been received and
+structurally verified (see below). The service prompt is byte-identical to the
+recorded eval prompt and the fingerprint validator accepts the folder. Actual
+model loading, GPU memory, latency and score equivalence with the notebook are
+still NOT verified; that needs a real hardware rehearsal.
 
 Only bounded C functions in `.c` files are supported. Extraction is a conservative
 brace-matching heuristic, not a C parser or dataflow analysis. C++, headers,
@@ -44,17 +49,45 @@ CPU mode is explicit float32, uses more RAM, is slower, and can differ numerical
 from the evaluated 4-bit model. No automatic fallback or different base occurs.
 The default token cap is 1024; oversized functions are rejected, not truncated.
 
+## Verified adapter (received Nov 25, 2026)
+
+Source: user-shared view-only Google Drive folder `runs/qwen15b-diversevul-v6`,
+subfolder `adapter/`. Received files: `adapter_config.json`,
+`adapter_model.safetensors` (73,911,112 bytes, sha256
+`0dc2e078dbaeb3fccf0f293af60fc2de39e96cc800c5556eac4b4d9e9c90dca3`),
+`chat_template.jinja`, `tokenizer_config.json`, `tokenizer.json`, `README.md`.
+
+Verified structure: PEFT LoRA (`peft_type: LORA`, peft 0.21.2), base
+`Qwen/Qwen2.5-Coder-1.5B-Instruct`, rank 16, alpha 32, dropout 0.05, targeting
+q/k/v/o/gate/up/down projections. 392 tensors = 28 layers x 7 modules x
+lora_A/lora_B, all float32, safetensors format `pt`, data section byte-exact.
+No pickle `.bin` weights are used. The service fingerprint (sha256 over config
+and weights, see `adapter_fingerprint`) for this folder is
+`43d5c1c7efd8bf33acbc4ac740409f776e87974d5502f6f68a4e5b6e85f83b6c`; the server
+prints its computed fingerprint at startup for comparison.
+
+Training record (`run-config.json`, `train-metrics.json`): DiverseVul
+(`claudios/DiverseVul`), 3,000 train + 500 eval functions per class, max 3,500
+chars/function, max_length 1024, one epoch, seed 42, trained with TRL 1.18.2,
+transformers 5.22.1, torch 2.14.1+cu130, peft 0.21.2.
+
+Recorded final eval (`eval-results.json`, 2026-11-24T23:17 UTC, 1,000 held-out
+functions): fine-tuned generation accuracy 0.644 / F1 0.620; logits at
+threshold 0 accuracy 0.649 / F1 0.629; best swept threshold -0.640625 gives
+recall 0.896 at precision 0.563 / F1 0.691. The base model answered yes to
+everything (accuracy 0.500). The artifact records `roc_auc: null` for the
+fine-tuned model; an ROC-AUC figure of 0.705 quoted earlier is not present in
+this run's artifacts, so treat it as unconfirmed. The `eval-ckpt-*` files are
+intermediate checkpoint outputs (all scores positive), not the final adapter.
+
 ## Required adapter files
 
-Minimum: `adapter_config.json` and `adapter_model.safetensors`. If sharded, include
-all `adapter_model*.safetensors` plus the index. Include training/eval config or
-notebook and any tokenizer files for compatibility inspection. The recovered eval
-used the base tokenizer; the service does too. Send the complete adapter ZIP or
-a filename-and-size listing first. No base weights, dataset or Google credentials
-are needed. Size depends on rank/modules, so there is no invented MB requirement.
-The user can choose a view-only Drive download link or Hugging Face upload. No
-automatic upload is performed. If only `.bin` exists, re-export safetensors in
-the user's notebook; this service refuses pickle adapter weights.
+Minimum: `adapter_config.json` and `adapter_model.safetensors` (both received
+and verified, see above). If sharded, include all `adapter_model*.safetensors`
+plus the index. The recovered eval used the base tokenizer; the service does
+too. No base weights, dataset or Google credentials are needed. If only `.bin`
+exists, re-export safetensors in the user's notebook; this service refuses
+pickle adapter weights.
 
 The service loads Qwen/Qwen2.5-Coder-1.5B-Instruct plus the supplied PEFT adapter.
 It fails on missing/incompatible weights. It never substitutes the existing
@@ -76,9 +109,10 @@ generate a free-form explanation or execute model output.
 
 Default threshold: **0**, inclusive. `--threshold <finite margin>` overrides it.
 This means yes is at least as likely as no in the label comparison, NOT calibrated
-confidence. F1 0.620 and ROC-AUC 0.705, as reported in the earlier evaluation,
-do not establish a reliable production cutoff. Select thresholds on a separate
-validation set, not the held-out test set. Preserve false alarms and misses.
+confidence. The recorded eval (above) shows F1 0.629 at this default and a
+high-recall tradeoff at -0.640625; neither establishes a reliable production
+cutoff. Select thresholds on a separate validation set, not the held-out test
+set. Preserve false alarms and misses.
 
 Every prediction is labelled `unconfirmed-model-prediction`, severity `unknown`,
 with raw score and candidate flag. No CVE, CWE, exploitability or remediation is
@@ -110,7 +144,8 @@ publicly or create an unauthenticated tunnel.
 
 ## Before a defense
 
-1. Obtain real adapter, verify base/config/hash, record package versions/device.
+1. DONE (Nov 25, 2026): adapter received, base/config/hash verified, training
+   package versions recorded. Still open: rehearsal device and package freeze.
 2. Compare service scores with the eval notebook on identical C functions,
    tokenization and precision. Record differences.
 3. Rehearse vulnerable and bounded examples, keep false negatives visible,
