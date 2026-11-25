@@ -28,7 +28,37 @@ function center(text: string, width: number): string {
   return ' '.repeat(left) + text + ' '.repeat(Math.max(0, width - left - text.length));
 }
 
-export function forgeArt(state: OrbState, caps: RenderCapabilities, t: number): string[] {
+function enlarge(rows: string[]): string[] {
+  const out: string[] = [];
+  for (const [index, row] of rows.entries()) {
+    let wide = '';
+    for (let i = 0; i < row.length; i += 1) {
+      const ch = row[i] as string;
+      if (ch === '\u001b') {
+        const end = row.indexOf('m', i);
+        wide += row.slice(i, end + 1);
+        i = end;
+      } else if (ch === '●' || ch === '○' || ch === '▮' || ch === '│') {
+        wide += `${ch} `;
+      } else {
+        wide += ch + ch;
+      }
+    }
+    if (index === 0) {
+      out.push(wide);
+    } else {
+      out.push(wide, wide);
+    }
+  }
+  return out;
+}
+
+export function forgeArt(
+  state: OrbState,
+  caps: RenderCapabilities,
+  t: number,
+  scale: 1 | 2 = 1,
+): string[] {
   const W = FORGE_ART_WIDTH;
   const light = statusColor(state);
   const blinking = state === 'SCANNING' || state === 'ANALYZING';
@@ -92,5 +122,6 @@ export function forgeArt(state: OrbState, caps: RenderCapabilities, t: number): 
     sp(5);
   const belly = sp(5) + fg(caps, white, '▀'.repeat(11)) + sp(5);
 
-  return [antenna, stem, top, visorTop, visorEyes, visorBottom, jaw, neck, chest, belly];
+  const rows = [antenna, stem, top, visorTop, visorEyes, visorBottom, jaw, neck, chest, belly];
+  return scale === 2 ? enlarge(rows) : rows;
 }

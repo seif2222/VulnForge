@@ -42,15 +42,58 @@ export function bold(caps: RenderCapabilities, text: string): string {
   return caps.color === 'mono' ? text : `\u001b[1m${text}\u001b[22m`;
 }
 
+/**
+ * Secondary text. Never a faint/dim attribute and never the 16-color "bright black"
+ * (invisible on many Windows palettes): a light lavender-gray that stays readable on
+ * the dark base in truecolor, 256 and plain 16-color terminals.
+ */
+function mixHex(a: string, b: string, amount: number): string {
+  const channel = (hex: string, i: number): number => Number.parseInt(hex.slice(i, i + 2), 16);
+  return `#${[1, 3, 5]
+    .map((i) =>
+      Math.round(channel(a, i) + (channel(b, i) - channel(a, i)) * amount)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+}
+
+export const TEXT_MUTED: TuiColor = {
+  hex: mixHex(TUI_COLORS.textPrimary.hex, TUI_COLORS.textSecondary.hex, 0.3),
+  xterm256: 252,
+  ansi16: 'white',
+};
+/** Violet for text on the dark base: brighter than the bar violet so it keeps contrast. */
+export const ACCENT_TEXT: TuiColor = { ...TUI_COLORS.accentStrong, ansi16: 'brightMagenta' };
+
 export function dim(caps: RenderCapabilities, text: string): string {
-  return fg(caps, TUI_COLORS.textSecondary, text);
+  return fg(caps, TEXT_MUTED, text);
+}
+
+/** SGR that paints the dark base on every color terminal, so contrast never depends on the user's theme. */
+export function baseBg(caps: RenderCapabilities): string {
+  if (caps.color === 'truecolor') {
+    const hex = TUI_COLORS.bgBase.hex;
+    return `\u001b[48;2;${Number.parseInt(hex.slice(1, 3), 16)};${Number.parseInt(hex.slice(3, 5), 16)};${Number.parseInt(hex.slice(5, 7), 16)}m`;
+  }
+  if (caps.color === '256') {
+    return `\u001b[48;5;${TUI_COLORS.bgBase.xterm256}m`;
+  }
+  if (caps.color === '16') {
+    return '\u001b[40m';
+  }
+  return '';
 }
 
 export const SEVERITY_COLORS = {
   critical: TUI_COLORS.severityCritical,
-  high: TUI_COLORS.severityHigh,
+  high: { ...TUI_COLORS.severityHigh, ansi16: 'yellow' } as TuiColor,
   medium: TUI_COLORS.severityMedium,
-  low: TUI_COLORS.severityLow,
+  low: {
+    hex: mixHex(TUI_COLORS.textPrimary.hex, TUI_COLORS.severityLow.hex, 0.4),
+    xterm256: 249,
+    ansi16: 'white',
+  } as TuiColor,
 } as const;
 
 export function severityGlyph(
