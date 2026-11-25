@@ -1,0 +1,12 @@
+# Render Blueprint for the public VulnForge demo (free plan).
+services:
+  - type: web
+    name: vulnforge-demo
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
+    startCommand: node packages/cli/dist/public-main.js
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_VERSION
+        value: 22

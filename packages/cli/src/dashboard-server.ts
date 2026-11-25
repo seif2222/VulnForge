@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  writeFileSync,
   readFileSync,
   readdirSync,
   realpathSync,
@@ -215,7 +216,31 @@ export interface DashboardServerOptions {
    * never fail a scan: the server swallows its errors and keeps the base report.
    */
   readonly suggest?: SuggestFn;
+  /** Present only for the public demo. Absent means the local-only server, unchanged. */
+  readonly publicDemo?: PublicDemoOptions;
 }
+
+/**
+ * Public demo mode: the same server, hardened for strangers on the internet.
+ * No path scans (visitors paste a manifest, which is written to a private temp dir),
+ * no structure listing, no shared history, per-visitor progress, per-IP rate limits.
+ */
+export interface PublicDemoOptions {
+  /** Interface to bind, normally 0.0.0.0 behind the host's proxy. */
+  readonly host: string;
+  /** Max scans per visitor IP per window. */
+  readonly maxScansPerWindow: number;
+  readonly windowMs: number;
+  /** Hard cap on one scan, in milliseconds. */
+  readonly scanTimeoutMs: number;
+}
+
+export const PUBLIC_MANIFEST_NAMES = [
+  'package-lock.json',
+  'package.json',
+  'requirements.txt',
+] as const;
+const PUBLIC_MAX_BODY_BYTES = 1024 * 1024;
 
 export interface RunningServer {
   readonly port: number;
@@ -247,7 +272,11 @@ export async function startDashboardServer(
     );
   }
 
-  const history = createDashboardHistory(options.historyPath);
+  const publicDemo = options.publicDemo;
+  const history = createDashboardHistory(
+    publicDemo === undefined ? options.historyPath : undefined,
+  );
+  const scanTimes = new Map<string, number[]>();
   let startupReport: Report | null = null;
   if (options.reportPath !== undefined) {
     let parsed: unknown;
@@ -272,6 +301,7 @@ export async function startDashboardServer(
   // The events channel is persistent: clients connect before launching a scan and see
   // every state change and progress event from then on.
   const eventListeners = new Set<ServerResponse>();
+  const listenerClient = new Map<ServerResponse, string>();
 
   const server: Server = createServer((req, res) => {
     void handle(req, res).catch(() => {
@@ -285,7 +315,7 @@ export async function startDashboardServer(
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const port = boundPort();
     const host = req.headers.host ?? '';
-    if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) {
+    if (publicDemo === undefined && host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) {
       sendJson(res, 403, { error: 'forbidden-host' });
       return;
     }
@@ -321,14 +351,24 @@ export async function startDashboardServer(
     }
 
     if (req.method === 'GET' && pathname === '/api/history') {
-      sendJson(res, 200, history.snapshot());
+      sendJson(
+        res,
+        200,
+        publicDemo === undefined
+          ? history.snapshot()
+          : { reports: [], warning: 'History is turned off on the public demo.', path: null },
+      );
       return;
     }
 
     if (req.method === 'GET' && pathname === '/api/status') {
       sendJson(res, 200, {
         ok: true,
-        capabilities: { ai: options.aiAvailable, scan: true },
+        capabilities: {
+          ai: options.aiAvailable,
+          scan: true,
+          ...(publicDemo === undefined ? {} : { publicDemo: true }),
+        },
         toolVersion: options.toolVersion,
       });
       return;
@@ -354,6 +394,10 @@ export async function startDashboardServer(
     }
 
     if (req.method === 'GET' && pathname === '/api/structure') {
+      if (publicDemo !== undefined) {
+        sendJson(res, 404, { error: 'disabled-on-public-demo' });
+        return;
+      }
       serveStructure(rawUrl, res);
       return;
     }
@@ -379,14 +423,26 @@ export async function startDashboardServer(
         : { state: 'scanning', runId: scan.runId, progress: scan.lastProgress };
     res.write(`event: state\ndata: ${JSON.stringify(snapshot)}\n\n`);
     eventListeners.add(res);
+    const clientId = new URL(req.url ?? '/', 'http://x').searchParams.get('cid');
+    if (clientId !== null) {
+      listenerClient.set(res, clientId.slice(0, 64));
+    }
     req.on('close', () => {
       eventListeners.delete(res);
+      listenerClient.delete(res);
     });
   }
 
-  function emitEvent(event: string, data: unknown): void {
+  function emitEvent(event: string, data: unknown, onlyClient?: string): void {
     const line = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     for (const listener of eventListeners) {
+      if (
+        publicDemo !== undefined &&
+        onlyClient !== undefined &&
+        listenerClient.get(listener) !== onlyClient
+      ) {
+        continue; // other visitors never see this visitor's package names
+      }
       listener.write(line);
     }
   }
@@ -426,7 +482,9 @@ export async function startDashboardServer(
     }
     let body: unknown;
     try {
-      body = JSON.parse(await readBody(req));
+      body = JSON.parse(
+        await readBody(req, publicDemo === undefined ? MAX_BODY_BYTES : PUBLIC_MAX_BODY_BYTES),
+      );
     } catch (error) {
       if (error instanceof BodyTooLargeError) {
         // Respond, then close once the response is flushed - destroying the socket first
@@ -440,10 +498,54 @@ export async function startDashboardServer(
       sendJson(res, 400, { error: 'bad-json' });
       return;
     }
-    const projectPath =
-      typeof body === 'object' && body !== null
-        ? (body as Record<string, unknown>)['projectPath']
-        : undefined;
+    const record =
+      typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
+    let projectPath = record['projectPath'];
+    let publicTempDir: string | null = null;
+    let publicClient = '';
+    if (publicDemo !== undefined) {
+      const name = record['manifestName'];
+      const content = record['manifestContent'];
+      if (
+        typeof name !== 'string' ||
+        !(PUBLIC_MANIFEST_NAMES as readonly string[]).includes(name) ||
+        typeof content !== 'string' ||
+        content.trim() === ''
+      ) {
+        sendJson(res, 400, {
+          error: 'bad-manifest',
+          message: `send manifestName (${PUBLIC_MANIFEST_NAMES.join(', ')}) and manifestContent`,
+        });
+        return;
+      }
+      if (name.endsWith('.json')) {
+        try {
+          JSON.parse(content);
+        } catch {
+          sendJson(res, 400, { error: 'bad-manifest', message: `${name} is not valid JSON` });
+          return;
+        }
+      }
+      const ip = clientIp(req);
+      const now = Date.now();
+      const recent = (scanTimes.get(ip) ?? []).filter((time) => now - time < publicDemo.windowMs);
+      if (recent.length >= publicDemo.maxScansPerWindow) {
+        sendJson(res, 429, {
+          error: 'rate-limited',
+          message: `demo limit: ${publicDemo.maxScansPerWindow} scans per ${Math.round(publicDemo.windowMs / 60000)} minutes`,
+        });
+        return;
+      }
+      recent.push(now);
+      scanTimes.set(ip, recent);
+      if (scanTimes.size > 5000) {
+        scanTimes.clear();
+      }
+      publicTempDir = mkdtempSync(join(tmpdir(), 'vulnforge-public-'));
+      writeFileSync(join(publicTempDir, name), content, { mode: 0o600 });
+      projectPath = publicTempDir;
+      publicClient = typeof record['clientId'] === 'string' ? record['clientId'].slice(0, 64) : '';
+    }
     if (typeof projectPath !== 'string' || projectPath.trim() === '') {
       sendJson(res, 400, { error: 'bad-project-path' });
       return;
@@ -470,7 +572,15 @@ export async function startDashboardServer(
       }
     });
 
-    const emit = emitEvent;
+    const emit = (event: string, data: unknown): void => {
+      emitEvent(event, data, publicClient);
+    };
+    const timeout =
+      publicDemo === undefined
+        ? null
+        : setTimeout(() => {
+            controller.abort();
+          }, publicDemo.scanTimeoutMs);
 
     emit('state', { state: 'scanning', runId: scan.runId });
     try {
@@ -533,7 +643,9 @@ export async function startDashboardServer(
       // scan never sees a stale 409 and no scan artifacts linger. Event listeners stay
       // subscribed: the channel is persistent across runs.
       activeScan = null;
+      if (timeout !== null) clearTimeout(timeout);
       rmSync(tempDir, { recursive: true, force: true });
+      if (publicTempDir !== null) rmSync(publicTempDir, { recursive: true, force: true });
     }
   }
 
@@ -583,7 +695,7 @@ export async function startDashboardServer(
         new DashboardError('listen-failed', `port ${options.port ?? DEFAULT_PORT} unavailable`),
       );
     });
-    server.listen(options.port ?? DEFAULT_PORT, '127.0.0.1', () => {
+    server.listen(options.port ?? DEFAULT_PORT, publicDemo?.host ?? '127.0.0.1', () => {
       resolvePromise();
     });
   });
@@ -626,13 +738,20 @@ function sendJson(res: ServerResponse, status: number, payload: unknown): void {
 
 class BodyTooLargeError extends Error {}
 
-function readBody(req: IncomingMessage): Promise<string> {
+/** The visitor behind the host's proxy: the first X-Forwarded-For hop, else the socket. */
+function clientIp(req: IncomingMessage): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0]?.trim();
+  return first !== undefined && first !== '' ? first : (req.socket.remoteAddress ?? 'unknown');
+}
+
+function readBody(req: IncomingMessage, maxBytes: number = MAX_BODY_BYTES): Promise<string> {
   return new Promise((resolvePromise, rejectPromise) => {
     const chunks: Buffer[] = [];
     let size = 0;
     req.on('data', (chunk: Buffer) => {
       size += chunk.length;
-      if (size > MAX_BODY_BYTES) {
+      if (size > maxBytes) {
         req.removeAllListeners('data');
         req.resume(); // drain the rest so the response can be delivered
         rejectPromise(new BodyTooLargeError());

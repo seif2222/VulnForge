@@ -3,7 +3,11 @@ import type { Report } from './core.js';
 
 export interface StatusPayload {
   readonly ok: boolean;
-  readonly capabilities: { readonly ai: boolean; readonly scan: boolean };
+  readonly capabilities: {
+    readonly ai: boolean;
+    readonly scan: boolean;
+    readonly publicDemo?: boolean;
+  };
   readonly toolVersion: string;
 }
 
@@ -48,12 +52,37 @@ export interface ScanLaunch {
   readonly cancel: () => void;
 }
 
-export function launchScan(projectPath: string, aiExplanations: boolean): ScanLaunch {
+/** Stable per-tab id so the public demo can send each visitor only their own progress. */
+export function clientId(): string {
+  const key = 'vulnforge-client-id';
+  let id = sessionStorage.getItem(key);
+  if (id === null) {
+    id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    sessionStorage.setItem(key, id);
+  }
+  return id;
+}
+
+/** Public demo: the visitor pastes a manifest instead of naming a server path. */
+export interface PastedManifest {
+  readonly manifestName: string;
+  readonly manifestContent: string;
+}
+
+export function launchScan(
+  projectPath: string,
+  aiExplanations: boolean,
+  pasted?: PastedManifest,
+): ScanLaunch {
   const controller = new AbortController();
   const response = fetch('/api/scan', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ projectPath, aiExplanations }),
+    body: JSON.stringify(
+      pasted === undefined
+        ? { projectPath, aiExplanations }
+        : { ...pasted, aiExplanations: false, clientId: clientId() },
+    ),
     signal: controller.signal,
   }).then(async (res) => {
     if (!res.ok) {
@@ -72,7 +101,7 @@ export function subscribeScanEvents(
   onState: (event: ScanStateEvent) => void,
   onProgress: (progress: ScanProgress) => void,
 ): () => void {
-  const source = new EventSource('/api/scan/events');
+  const source = new EventSource(`/api/scan/events?cid=${encodeURIComponent(clientId())}`);
   source.addEventListener('state', (event) => {
     onState(JSON.parse(event.data as string) as ScanStateEvent);
   });
