@@ -25,7 +25,7 @@ export function ForgeDock(props: { readonly session: ScanSession }) {
           <>The last scan failed: {ui.errorMessage}</>
         ) : report === null ? (
           <>
-            No report yet. Give me a project path in <strong>Start New Scan</strong>.
+            No report yet. Give me a project in <strong>Start New Scan</strong>.
           </>
         ) : (
           <>

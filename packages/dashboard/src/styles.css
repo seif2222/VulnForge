@@ -459,8 +459,11 @@ button.primary:disabled {
   cursor: not-allowed;
 }
 
-input.text {
+input.text,
+textarea.text,
+select.text {
   width: 100%;
+  box-sizing: border-box;
   padding: var(--vf-space-sm) var(--vf-space-md);
   border: 1px solid var(--vf-border-strong);
   border-radius: var(--vf-radius-md);
@@ -1492,4 +1495,16 @@ input.text:focus-visible {
 .vf-progress {
   margin: var(--vf-space-md) 0 var(--vf-space-xl);
   padding-top: var(--vf-space-md);
+}
+
+.demo-form label {
+  display: block;
+  margin-top: var(--vf-space-md);
+  margin-bottom: var(--vf-space-xs);
+}
+
+textarea.text {
+  min-height: 220px;
+  resize: vertical;
+  font-size: 12.5px;
 }

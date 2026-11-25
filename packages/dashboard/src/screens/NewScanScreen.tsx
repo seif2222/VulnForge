@@ -57,6 +57,7 @@ export function NewScanScreen(props: { readonly session: ScanSession }) {
             (no AI model runs online). Limit: 8 scans per 10 minutes per visitor.
           </p>
           <form
+            className="demo-form"
             onSubmit={(event) => {
               event.preventDefault();
               launchPasted();
