@@ -1,0 +1,243 @@
+/* "Impact Frame" theme: Sakuga's key-animator look (thick outlines, hard offset
+   shadows, speed lines, manga lettering) on VulnForge's navy/violet tokens, with
+   Forge as the animator narrating real scan facts. Colours only from tokens
+   (hex-audit); everything decorative, every number comes from the report. */
+
+:root {
+  --if-line: var(--vf-accent-strong);
+  --if-shadow: color-mix(in srgb, var(--vf-accent) 70%, var(--vf-bg-base));
+  --if-hot: var(--vf-severity-critical);
+  --if-paper: color-mix(in srgb, var(--vf-accent) 22%, var(--vf-bg-base));
+}
+
+body {
+  background-color: var(--vf-bg-base);
+  background-image:
+    repeating-linear-gradient(
+      115deg,
+      transparent 0 46px,
+      color-mix(in srgb, var(--vf-accent) 16%, transparent) 46px 48px
+    ),
+    radial-gradient(
+      ellipse at 80% -10%,
+      color-mix(in srgb, var(--vf-accent) 55%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 0% 110%,
+      color-mix(in srgb, var(--if-hot) 30%, transparent),
+      transparent 50%
+    );
+  background-attachment: fixed;
+}
+
+.sidebar {
+  background: color-mix(in srgb, var(--vf-bg-base) 88%, black);
+  border-right: 3px solid var(--if-line);
+}
+
+.brand {
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.tab {
+  border: 2px solid transparent;
+  font-weight: 700;
+  transition: transform var(--vf-motion-fast) var(--vf-motion-easing);
+}
+
+.tab:hover {
+  background: var(--vf-accent-tint);
+  transform: translateX(3px);
+}
+
+.tab[aria-selected='true'] {
+  background: var(--vf-accent);
+  border-color: var(--if-line);
+  color: var(--vf-text-primary);
+  box-shadow: 4px 4px 0 var(--if-hot);
+  transform: skewX(-6deg) translateX(4px);
+}
+
+.tab[aria-selected='true'] .icon {
+  color: var(--vf-text-primary);
+}
+
+.state-pill {
+  border: 2px solid var(--if-line);
+  font-weight: 800;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--if-shadow);
+}
+
+.panel,
+.stat-card {
+  background: var(--vf-bg-raised);
+  border: 3px solid var(--if-line);
+  border-radius: 16px;
+  box-shadow: 7px 7px 0 var(--if-shadow);
+}
+
+.panel h2 {
+  display: inline-block;
+  padding: 3px 14px 4px;
+  margin: calc(var(--vf-space-lg) * -1 - 4px) 0 var(--vf-space-md) calc(var(--vf-space-md) * -1);
+  background: var(--vf-accent);
+  color: var(--vf-text-primary);
+  border: 2px solid var(--if-line);
+  font-size: 12px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  transform: skewX(-8deg) rotate(-1deg);
+  box-shadow: 3px 3px 0 var(--if-hot);
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card .value {
+  font-size: 46px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.stat-card .label {
+  margin-top: var(--vf-space-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--vf-text-primary);
+}
+
+.stat-card.sev-critical {
+  background: linear-gradient(135deg, var(--vf-severity-critical-tint), var(--vf-bg-raised));
+  border-color: var(--vf-severity-critical);
+  box-shadow: 7px 7px 0 var(--vf-severity-critical-tint);
+}
+
+.stat-card.sev-critical::after {
+  content: 'ドン!';
+  position: absolute;
+  right: 10px;
+  top: 6px;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--vf-severity-critical);
+  transform: rotate(8deg);
+}
+
+.stat-card.sev-high::after {
+  content: 'ガン!';
+  position: absolute;
+  right: 10px;
+  top: 6px;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--vf-severity-high);
+  transform: rotate(6deg);
+}
+
+.badge {
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  padding: 1px 9px;
+  font-weight: 800;
+  font-style: italic;
+  transform: skewX(-8deg);
+}
+
+.badge.critical {
+  background: var(--vf-severity-critical);
+  color: var(--vf-text-primary);
+  border-color: var(--vf-text-primary);
+}
+
+.table th {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--vf-accent-strong);
+}
+
+.table tbody tr:hover {
+  background: var(--vf-accent-tint);
+}
+
+button.primary,
+input.text {
+  border-width: 2px;
+}
+
+input.text {
+  border-color: var(--if-line);
+  box-shadow: 4px 4px 0 var(--if-shadow);
+}
+
+.panel-forge {
+  background: linear-gradient(160deg, var(--if-paper), var(--vf-bg-raised) 80%);
+  box-shadow: 7px 7px 0 var(--if-hot);
+}
+
+/* Forge narrates: a speech bubble built from the real report. */
+.forge-says {
+  position: relative;
+  margin: 0 0 var(--vf-space-lg);
+  padding: var(--vf-space-md) var(--vf-space-lg);
+  background: var(--vf-text-primary);
+  color: var(--vf-bg-base);
+  border: 3px solid var(--if-line);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--if-hot);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.forge-says::after {
+  content: '';
+  position: absolute;
+  right: -22px;
+  top: 28px;
+  border: 12px solid transparent;
+  border-left: 18px solid var(--if-line);
+}
+
+.forge-says .who {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vf-accent);
+}
+
+.forge-says strong {
+  color: var(--vf-severity-critical);
+}
+
+.grid-overview > .forge-says {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0 22px 0 0;
+}
+
+.empty {
+  border: 3px dashed var(--if-line);
+  border-radius: 16px;
+  padding: var(--vf-space-xl);
+  color: var(--vf-text-primary);
+  font-weight: 700;
+  background: var(--vf-accent-tint);
+}
+
+.panel-posture {
+  align-self: start;
+}

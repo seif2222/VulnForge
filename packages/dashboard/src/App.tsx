@@ -131,7 +131,7 @@ export function App() {
   const toastMessage =
     session.report === null
       ? 'Scan finished'
-      : `Done: ${String(session.report.stats.totalVulnerabilities)} finding(s)`;
+      : `${String(session.report.stats.totalVulnerabilities)} findings`;
 
   if (!entered) {
     return <Intro onStart={() => setEntered(true)} />;

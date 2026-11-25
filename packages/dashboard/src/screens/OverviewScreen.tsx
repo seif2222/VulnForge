@@ -57,6 +57,8 @@ export function OverviewScreen(props: { readonly session: ScanSession }) {
         <p className="mono muted">STATE: {session.ui.state.toUpperCase()}</p>
       </section>
 
+      <ForgeSays model={model} />
+
       <div className="grid-cards">
         {model.statCards.map((card) => (
           <div
@@ -164,5 +166,29 @@ function DistFill(props: { readonly severity: string; readonly share: number }) 
     <svg viewBox="0 0 100 10" preserveAspectRatio="none" className="dist-svg">
       <rect x="0" y="0" width={width} height="10" className={`dist-fill ${props.severity}`} />
     </svg>
+  );
+}
+
+/** Forge narrates the real report: every number and name below comes from it. */
+function ForgeSays(props: { readonly model: ReturnType<typeof buildOverviewModel> }) {
+  const { model } = props;
+  const total = model.priorityRows.length;
+  const worst = model.priorityRows[0];
+  return (
+    <div className="forge-says" role="status">
+      <span className="who">Forge</span>
+      {worst === undefined ? (
+        <>No known vulnerabilities found in {model.posture.projectName}.</>
+      ) : (
+        <>
+          <strong>{total}</strong> finding(s) in {model.posture.projectName}. Hit first:{' '}
+          <strong>
+            {worst.packageName}@{worst.installedVersion}
+          </strong>{' '}
+          ({worst.cve ?? worst.id}, {worst.severity}
+          {worst.fixedVersion === null ? '' : `, fixed in ${worst.fixedVersion}`}).
+        </>
+      )}
+    </div>
   );
 }
