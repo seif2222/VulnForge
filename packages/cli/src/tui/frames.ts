@@ -9,6 +9,8 @@ import { TUI_COLORS } from '../colors.generated.js';
 import { scanConstellationFrame, type OrbState, type RenderCapabilities } from './render3d.js';
 import { forgeArt, FORGE_ART_WIDTH } from './forge-art.js';
 import {
+  ACCENT_TEXT,
+  baseBg,
   bg,
   bold,
   cell,
@@ -66,7 +68,13 @@ export function composeFrame(
   content = content.slice(0, contentHeight);
 
   const lines = [header, divider, ...content, divider, footer];
-  return lines.map((line) => padLine(fitLine(line, width), width));
+  // Our own `bg()` pills end with "default background"; re-assert the dark base there
+  // so no cell ever falls back to the terminal's own (possibly light or blue) background.
+  const base = baseBg(caps);
+  return lines.map((line) => {
+    const padded = padLine(fitLine(line, width), width);
+    return base === '' ? padded : base + padded.split('\u001b[49m').join(base);
+  });
 }
 
 function tooSmallFrame(width: number, height: number): string[] {
@@ -92,7 +100,7 @@ function headerLine(model: TuiModel, width: number, caps: RenderCapabilities): s
     if (model.tab === id && !model.liveOpen) {
       return caps.color === 'mono'
         ? `[${id} ${label}]`
-        : bg(caps, TUI_COLORS.textPrimary, bold(caps, fg(caps, TUI_COLORS.accent, text)));
+        : bg(caps, TUI_COLORS.textPrimary, bold(caps, fg(caps, TUI_COLORS.accentOn, text)));
     }
     return onBar(text);
   }).join(caps.color === 'mono' ? ' ' : bg(caps, TUI_COLORS.accent, ' '));
@@ -136,7 +144,7 @@ function shortLabel(id: number): string {
 
 function dividerLine(width: number, caps: RenderCapabilities): string {
   const glyph = caps.unicode ? '━' : '-';
-  return fg(caps, TUI_COLORS.accent, glyph.repeat(width));
+  return fg(caps, ACCENT_TEXT, glyph.repeat(width));
 }
 
 function footerLine(model: TuiModel, width: number, caps: RenderCapabilities): string {
@@ -239,7 +247,7 @@ function centerLine(line: string, width: number): string {
 }
 
 function keyHint(caps: RenderCapabilities, key: string, action: string): string {
-  return `${fg(caps, TUI_COLORS.accent, key)}  ${dim(caps, action)}`;
+  return `${fg(caps, ACCENT_TEXT, key)}  ${dim(caps, action)}`;
 }
 
 /**
@@ -254,11 +262,12 @@ function welcomeLines(
   t: number,
 ): string[] {
   const chrome = 8; // greeting, spacing, three key hints, the open-report line
-  const robot = height >= chrome + 10 ? forgeArt(orbFor(model), caps, t) : [];
+  const big = height >= chrome + 22 && width >= 60;
+  const robot = height >= chrome + 10 ? forgeArt(orbFor(model), caps, t, big ? 2 : 1) : [];
 
   const block: string[] = [];
   block.push(
-    centerLine(bold(caps, fg(caps, TUI_COLORS.accent, "Hello, I'm Forge. Let's start.")), width),
+    centerLine(bold(caps, fg(caps, ACCENT_TEXT, "Hello, I'm Forge. Let's start.")), width),
   );
   block.push('');
   for (const row of robot) {
@@ -486,15 +495,15 @@ function startScanLines(
       );
       model.ecosystemChoice.options.forEach((eco, i) => {
         lines.push(
-          `   ${fg(caps, TUI_COLORS.accent, `[${i + 1}]`)} ${bold(caps, eco)}${' '.repeat(Math.max(1, 8 - eco.length))}${dim(caps, MANIFEST_FOR[eco] ?? '')}`,
+          `   ${fg(caps, ACCENT_TEXT, `[${i + 1}]`)} ${bold(caps, eco)}${' '.repeat(Math.max(1, 8 - eco.length))}${dim(caps, MANIFEST_FOR[eco] ?? '')}`,
         );
       });
       lines.push('');
       lines.push(
         dim(caps, '  press ') +
-          fg(caps, TUI_COLORS.accent, '1') +
+          fg(caps, ACCENT_TEXT, '1') +
           dim(caps, ' or ') +
-          fg(caps, TUI_COLORS.accent, '2') +
+          fg(caps, ACCENT_TEXT, '2') +
           dim(caps, ' to scan that ecosystem · esc to cancel'),
       );
     }
@@ -803,7 +812,7 @@ function liveMonitorLines(
     scan.queriesTotal > 0
       ? `Querying OSV — ${scan.queriesDone} / ${scan.queriesTotal} queries${scan.lastPackage === null ? '' : ` · ${scan.lastPackage}`}`
       : 'preparing scan…';
-  lines.push(` ${fg(caps, TUI_COLORS.accent, queryText)}`);
+  lines.push(` ${fg(caps, ACCENT_TEXT, queryText)}`);
   if (scan.queriesTotal > 0) {
     lines.push(
       ` ${progressBar(caps, scan.queriesDone, scan.queriesTotal, Math.max(10, Math.min(width - 24, 48)))} ${dim(caps, `${scan.queriesDone}/${scan.queriesTotal} queries`)}`,

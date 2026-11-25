@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { analyzeProject, createFileCache, validateReport, type Report } from '@vulnforge/core';
 import { loadForgeConfig } from '@vulnforge/forge';
 
-import { TUI_COLORS, TUI_FRAME_MS } from '../colors.generated.js';
+import { TUI_FRAME_MS } from '../colors.generated.js';
 import { EXIT_CODES } from '../exit-codes.js';
 import type { CliDeps, CliIo } from '../run.js';
 import { composeFrame } from './frames.js';
@@ -19,7 +19,7 @@ import {
   type TuiModel,
 } from './model.js';
 import type { RenderCapabilities } from './render3d.js';
-import { padLine } from './theme.js';
+import { baseBg, padLine } from './theme.js';
 
 /** Reads the OS clipboard for a raw Ctrl+V; null when no clipboard tool answers. */
 function readOsClipboard(): Promise<string | null> {
@@ -45,21 +45,6 @@ function readOsClipboard(): Promise<string | null> {
       },
     );
   });
-}
-
-/** SGR that paints the theme background, for terminals that can show it. */
-function backgroundSequence(caps: RenderCapabilities): string {
-  if (caps.color === 'truecolor') {
-    const hex = TUI_COLORS.bgBase.hex;
-    const r = Number.parseInt(hex.slice(1, 3), 16);
-    const g = Number.parseInt(hex.slice(3, 5), 16);
-    const b = Number.parseInt(hex.slice(5, 7), 16);
-    return `\u001b[48;2;${r};${g};${b}m`;
-  }
-  if (caps.color === '256') {
-    return `\u001b[48;5;${TUI_COLORS.bgBase.xterm256}m`;
-  }
-  return '';
 }
 
 const MANIFESTS: readonly { readonly file: string; readonly ecosystem: string }[] = [
@@ -101,7 +86,10 @@ function capabilitiesFor(io: CliIo, env: NodeJS.ProcessEnv): RenderCapabilities 
           ? '256'
           : '16'));
   const locale = `${env.LC_ALL ?? ''}${env.LC_CTYPE ?? ''}${env.LANG ?? ''}`;
-  const unicode = !env.VULNFORGE_ASCII && locale.toLowerCase().includes('utf');
+  // Windows consoles never set LANG/LC_*, yet Windows Terminal and current conhost draw
+  // block and box glyphs fine; only an explicit VULNFORGE_ASCII opts out there.
+  const unicode =
+    !env.VULNFORGE_ASCII && (locale.toLowerCase().includes('utf') || process.platform === 'win32');
   return { color, unicode };
 }
 
@@ -270,7 +258,7 @@ export async function runTui(io: CliIo, deps: CliDeps, reportPath: string | null
   }
 
   const caps = capabilitiesFor(io, process.env);
-  const bg = backgroundSequence(caps);
+  const bg = baseBg(caps);
   const animate = animationsEnabled(io);
   let model: TuiModel = initialModel(envFacts(io, deps));
 
