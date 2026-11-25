@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactElement } from 'react';
 
 import { SakugaToast } from './components/Sakuga.js';
+import { ClickFX } from './components/ClickFX.js';
 import { ForgeDock } from './components/ForgeDock.js';
 import { Intro } from './components/Intro.js';
 import { useScan } from './lib/useScan.js';
@@ -196,6 +197,7 @@ export function App() {
           <SettingsScreen session={session} />
         )}
       </main>
+      <ClickFX />
       <ForgeDock session={session} />
       <SakugaToast token={toastToken} message={toastMessage} />
     </div>

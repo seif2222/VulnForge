@@ -25,35 +25,30 @@ export function Forge2D(props: {
       role="img"
       aria-label={`Forge, state: ${props.state}`}
       className={`forge2d ${stateClass}`}>
-      {/* hard offset shadow, like every Sakuga card */}
-      <ellipse cx="64" cy="115" rx="26" ry="4" className="forge-ground" />
+      <ellipse cx="60" cy="114" rx="24" ry="3.5" className="forge-ground" />
       {/* antenna */}
-      <line x1="60" y1="14" x2="60" y2="28" className="forge-line" />
-      <circle cx="60" cy="11" r="5" className="forge-accent-fill forge-antenna-ball forge-ink" />
-      {/* ears */}
-      <rect x="15" y="50" width="12" height="22" rx="5" className="forge-ear forge-ink" />
-      <rect x="93" y="50" width="12" height="22" rx="5" className="forge-ear forge-ink" />
+      <line x1="60" y1="16" x2="60" y2="28" className="forge-line" />
+      <circle cx="60" cy="13" r="3.6" className="forge-accent-fill forge-antenna-ball forge-ink" />
+      {/* ear caps */}
+      <rect x="19" y="49" width="7" height="20" rx="3" className="forge-shell forge-ink" />
+      <rect x="94" y="49" width="7" height="20" rx="3" className="forge-shell forge-ink" />
       {/* head */}
-      <rect x="29" y="29" width="68" height="52" rx="18" className="forge-shadow" />
-      <rect x="26" y="26" width="68" height="52" rx="18" className="forge-shell forge-ink" />
-      {/* screen face */}
-      <rect x="34" y="37" width="52" height="30" rx="12" className="forge-visor forge-ink" />
+      <rect x="28" y="28" width="64" height="50" rx="13" className="forge-shell forge-ink" />
+      {/* visor with two slim lights */}
+      <rect x="35" y="38" width="50" height="28" rx="8" className="forge-visor forge-ink" />
       <g className="forge-eyes">
-        <rect x="43" y="45" width="9" height="12" rx="4.5" className="forge-eye" />
-        <rect x="68" y="45" width="9" height="12" rx="4.5" className="forge-eye" />
+        <rect x="42" y="50" width="14" height="4.5" rx="2.2" className="forge-eye" />
+        <rect x="64" y="50" width="14" height="4.5" rx="2.2" className="forge-eye" />
       </g>
-      <ellipse cx="41" cy="62" rx="3.4" ry="2" className="forge-cheek" />
-      <ellipse cx="79" cy="62" rx="3.4" ry="2" className="forge-cheek" />
       {/* body */}
-      <rect x="41" y="83" width="44" height="28" rx="11" className="forge-shadow" />
-      <rect x="38" y="80" width="44" height="28" rx="11" className="forge-shell forge-ink" />
-      {/* chest screen */}
+      <rect x="40" y="82" width="40" height="27" rx="9" className="forge-shell forge-ink" />
+      {/* status light */}
       <rect
-        x="49"
-        y="87"
-        width="22"
-        height="13"
-        rx="4"
+        x="50"
+        y="91"
+        width="20"
+        height="8"
+        rx="3"
         className="forge-chest forge-accent-fill forge-ink"
       />
     </svg>

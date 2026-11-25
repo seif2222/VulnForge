@@ -1,5 +1,5 @@
 // Vendored from https://github.com/finktheartist/sakuga-vfx (checkbox/checkbox.js), MIT, see ./LICENSE.
-// One local change: styles are applied with constructable stylesheets instead of inline <style>
+// Local changes: lettering (sfx) disabled, primary button burst reduced, styles are applied with constructable stylesheets instead of inline <style>
 // elements, because the dashboard's CSP is style-src 'self' (no inline styles).
 // Sakuga Checkbox: tick it and two crescents swing round the box, crystals fly, the tick draws itself, and ズザッ lands in dotted letters.
 // Untick it and it goes out in a small puff.
@@ -253,7 +253,7 @@ function bake(name, fc, oc, dots) {
   x.fill(s.p); baked.set(key, c); return c;
 }
 // A word lands a size too big and wobbles while it stays. col: fill colour. edge: outline colour. dots: screentone letters.
-function sfx(name, x, y, { size = 64, rot = -0.14, life = 0.95, col, edge, dots } = {}) {
+function sfx(name, x, y, { size = 64, rot = -0.14, life = 0.95, col, edge, dots } = {}) { return; // dashboard: no manga lettering (local change)
   if (!word(name)) return; const s = new Spring(0.2, 520, 17); s.to = 1; let lastT = 0;
   const c = bake(name, col || P.sfx[0], edge || P.sfx[1], !!dots), k0 = size / WORDS[name][0];
   add(life, (k, t) => {

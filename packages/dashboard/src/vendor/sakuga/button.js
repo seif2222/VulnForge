@@ -1,5 +1,5 @@
 // Vendored from https://github.com/finktheartist/sakuga-vfx (button/button.js), MIT, see ./LICENSE.
-// One local change: styles are applied with constructable stylesheets instead of inline <style>
+// Local changes: lettering (sfx) disabled, primary button burst reduced, styles are applied with constructable stylesheets instead of inline <style>
 // elements, because the dashboard's CSP is style-src 'self' (no inline styles).
 // Sakuga Button: a button that reacts like an anime impact frame.
 // Primary: press and it squashes flat with wedges above it. Let go and the button inverts for one frame and tilts, a spiky burst goes off
@@ -48,7 +48,7 @@ class SakugaButton extends fx.Base {
   impact() {
     const b = this.b, sq = this.sq, c = at(b), n = ++this.seq; this.ok.to = 0; this.ok.x = 0;
     sq.s.x = Math.min(sq.s.x, 0.6); sq.pop.x = 1.24; sq.tilt.x = -5; b.classList.add('inv'); later(190, () => b.classList.remove('inv'));
-    burst(c.x, c.y, { r: 98, spikes: 17, life: 0.48, layer: this.back }); shards(c.x, c.y, { n: 11, speed: 260, size: 9, life: 0.95, arc: 6.28, grav: 300 });
+    burst(c.x, c.y, { r: 60, spikes: 13, life: 0.36, layer: this.back }); shards(c.x, c.y, { n: 6, speed: 200, size: 6, life: 0.7, arc: 6.28, grav: 300 });
       for (const [dx, dy] of [[-1, -0.5], [1, -1], [-1, 0.9], [1, 1]]) puff(c.x + dx * (c.w / 2 + 6), c.y + dy * 26, { size: rnd(12, 16), n: 5, vx: dx * 46, vy: dy * 30 - 6, life: rnd(0.75, 1.05) });
       sfx('don', c.x + 10, c.y - 84, { size: 176, rot: -0.12, life: 1.05 }); ticks(c.x - 96, c.y - 70, { dir: -2.4, n: 2, r: 4, len: 22, life: 0.45 }); ticks(c.x + 110, c.y - 60, { dir: -0.7, n: 2, r: 4, len: 22, life: 0.45 });
     later(200, () => { if (n !== this.seq) return; sq.s.x = 1.22; wob(c.x - c.w / 2 - 8, c.y, { dir: -1 }); wob(c.x + c.w / 2 + 8, c.y, { dir: 1 });
@@ -271,7 +271,7 @@ function bake(name, fc, oc, dots) {
   x.fill(s.p); baked.set(key, c); return c;
 }
 // A word lands a size too big and wobbles while it stays. col: fill colour. edge: outline colour. dots: screentone letters.
-function sfx(name, x, y, { size = 64, rot = -0.14, life = 0.95, col, edge, dots } = {}) {
+function sfx(name, x, y, { size = 64, rot = -0.14, life = 0.95, col, edge, dots } = {}) { return; // dashboard: no manga lettering (local change)
   if (!word(name)) return; const s = new Spring(0.2, 520, 17); s.to = 1; let lastT = 0;
   const c = bake(name, col || P.sfx[0], edge || P.sfx[1], !!dots), k0 = size / WORDS[name][0];
   add(life, (k, t) => {

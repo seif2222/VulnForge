@@ -1,5 +1,5 @@
 // Vendored from https://github.com/finktheartist/sakuga-vfx (toast/toast.js), MIT, see ./LICENSE.
-// One local change: styles are applied with constructable stylesheets instead of inline <style>
+// Local changes: lettering (sfx) disabled, primary button burst reduced, styles are applied with constructable stylesheets instead of inline <style>
 // elements, because the dashboard's CSP is style-src 'self' (no inline styles).
 // Sakuga Toast: a notification that streaks in from the left as a smear with speed lines behind it, lands in a cloud of dust with ズザッ
 // in dotted letters, wobbles, and after a while leaves by shrinking.
@@ -253,7 +253,7 @@ function bake(name, fc, oc, dots) {
   x.fill(s.p); baked.set(key, c); return c;
 }
 // A word lands a size too big and wobbles while it stays. col: fill colour. edge: outline colour. dots: screentone letters.
-function sfx(name, x, y, { size = 64, rot = -0.14, life = 0.95, col, edge, dots } = {}) {
+function sfx(name, x, y, { size = 64, rot = -0.14, life = 0.95, col, edge, dots } = {}) { return; // dashboard: no manga lettering (local change)
   if (!word(name)) return; const s = new Spring(0.2, 520, 17); s.to = 1; let lastT = 0;
   const c = bake(name, col || P.sfx[0], edge || P.sfx[1], !!dots), k0 = size / WORDS[name][0];
   add(life, (k, t) => {
