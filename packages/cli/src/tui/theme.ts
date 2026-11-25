@@ -126,3 +126,65 @@ export function stripAnsi(text: string): string {
   }
   return out;
 }
+
+/** Background color, same capability ladder as `fg`. Mono terminals get no background. */
+export function bg(caps: RenderCapabilities, color: TuiColor, text: string): string {
+  if (caps.color === 'mono') {
+    return text;
+  }
+  if (caps.color === 'truecolor') {
+    const r = Number.parseInt(color.hex.slice(1, 3), 16);
+    const g = Number.parseInt(color.hex.slice(3, 5), 16);
+    const b = Number.parseInt(color.hex.slice(5, 7), 16);
+    return `\u001b[48;2;${r};${g};${b}m${text}\u001b[49m`;
+  }
+  if (caps.color === '256') {
+    return `\u001b[48;5;${color.xterm256}m${text}\u001b[49m`;
+  }
+  const code = ANSI16_CODES[color.ansi16];
+  return `\u001b[${code + 10}m${text}\u001b[49m`;
+}
+
+/** Section heading in the dashboard's style: a violet bar, then the title in caps. */
+export function heading(caps: RenderCapabilities, title: string, note = ''): string {
+  const bar = fg(caps, TUI_COLORS.accent, caps.unicode ? '▌' : '|');
+  const text = bold(caps, title.toUpperCase());
+  return ` ${bar} ${text}${note === '' ? '' : `  ${dim(caps, note)}`}`;
+}
+
+/** Severity pill: tinted label in the severity color, readable in mono as [HIGH]. */
+export function severityPill(
+  caps: RenderCapabilities,
+  severity: keyof typeof SEVERITY_COLORS,
+  label: string,
+): string {
+  if (caps.color === 'mono') {
+    return `[${label.toUpperCase()}]`;
+  }
+  const tint = {
+    critical: TUI_COLORS.severityCriticalTint,
+    high: TUI_COLORS.severityHighTint,
+    medium: TUI_COLORS.severityMediumTint,
+    low: TUI_COLORS.severityLowTint,
+  }[severity];
+  return bg(
+    caps,
+    tint,
+    bold(caps, fg(caps, SEVERITY_COLORS[severity], ` ${label.toUpperCase()} `)),
+  );
+}
+
+/** Block progress bar on real counts. */
+export function progressBar(
+  caps: RenderCapabilities,
+  done: number,
+  total: number,
+  width: number,
+  color: TuiColor = TUI_COLORS.accent,
+): string {
+  const ratio = total <= 0 ? 0 : Math.min(1, Math.max(0, done / total));
+  const filled = Math.round(ratio * width);
+  const on = caps.unicode ? '█' : '#';
+  const off = caps.unicode ? '░' : '.';
+  return fg(caps, color, on.repeat(filled)) + dim(caps, off.repeat(width - filled));
+}
