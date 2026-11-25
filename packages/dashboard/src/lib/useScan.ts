@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Report, ScanHistoryEntry, UiScanState } from './core.js';
 import { INITIAL_UI_STATE, historyEntryFromReport, transition } from './core.js';
-import type { ScanProgress, StructurePayload } from './api.js';
+import type { PastedManifest, ScanProgress, StructurePayload } from './api.js';
 import {
   fetchHistory,
   fetchStartupReport,
@@ -24,7 +24,7 @@ export interface ScanSession {
   readonly structure: StructurePayload | null;
   /** True when the structure could not be listed for the target (said plainly in the UI). */
   readonly structureUnavailable: boolean;
-  readonly launch: (projectPath: string, aiExplanations: boolean) => void;
+  readonly launch: (projectPath: string, aiExplanations: boolean, pasted?: PastedManifest) => void;
   readonly cancel: () => void;
   readonly acknowledge: () => void;
   readonly reset: () => void;
@@ -151,13 +151,13 @@ export function useScan(): ScanSession {
   }, []);
 
   const launch = useCallback(
-    (projectPath: string, aiExplanations: boolean) => {
+    (projectPath: string, aiExplanations: boolean, pasted?: PastedManifest) => {
       const startedAt = new Date().toTimeString().slice(0, 8);
       setScannedPackages([]);
       setStructure(null);
       setStructureUnavailable(false);
       const seq = (structureSeq.current += 1);
-      fetchStructure(projectPath)
+      (pasted === undefined ? fetchStructure(projectPath) : Promise.resolve(null))
         .then((listed) => {
           if (seq !== structureSeq.current) {
             return; // a newer launch owns the structure state
@@ -177,7 +177,7 @@ export function useScan(): ScanSession {
         (current) =>
           transition(current, { type: 'scan-started', target: projectPath, startedAt }).next,
       );
-      const scan = launchScan(projectPath, aiExplanations);
+      const scan = launchScan(projectPath, aiExplanations, pasted);
       cancelRef.current = scan.cancel;
       scan.response
         .then((result) => {

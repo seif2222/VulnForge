@@ -18,6 +18,9 @@ export function NewScanScreen(props: { readonly session: ScanSession }) {
   const { session } = props;
   const busy = ['scanning', 'analyzing', 'detected'].includes(session.ui.state);
   const aiAvailable = status?.capabilities.ai === true;
+  const publicDemo = status?.capabilities.publicDemo === true;
+  const [manifestName, setManifestName] = useState('package.json');
+  const [manifestText, setManifestText] = useState('');
 
   useEffect(() => {
     let alive = true;
@@ -34,6 +37,108 @@ export function NewScanScreen(props: { readonly session: ScanSession }) {
       alive = false;
     };
   }, []);
+
+  if (publicDemo) {
+    const launchPasted = (): void => {
+      if (manifestText.trim() !== '' && !busy) {
+        session.launch(`pasted ${manifestName}`, false, {
+          manifestName,
+          manifestContent: manifestText,
+        });
+      }
+    };
+    return (
+      <div className="grid-single">
+        <section className="panel">
+          <h2>try vulnforge</h2>
+          <p className="muted mono">
+            Public demo. Paste or upload a dependency file. It is scanned against the real osv.dev
+            database and discarded right after. Nothing is stored. Forge explanations are off here
+            (no AI model runs online). Limit: 8 scans per 10 minutes per visitor.
+          </p>
+          <form
+            className="demo-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              launchPasted();
+            }}>
+            <label htmlFor="manifest-name" className="muted mono">
+              file type
+            </label>
+            <select
+              id="manifest-name"
+              className="text"
+              value={manifestName}
+              onChange={(event) => setManifestName(event.target.value)}
+              disabled={busy}>
+              <option value="package.json">package.json (npm)</option>
+              <option value="package-lock.json">package-lock.json (npm, exact versions)</option>
+              <option value="requirements.txt">requirements.txt (Python)</option>
+            </select>
+            <label htmlFor="manifest-file" className="muted mono">
+              upload a file (or paste below)
+            </label>
+            <input
+              id="manifest-file"
+              className="text"
+              type="file"
+              accept=".json,.txt"
+              disabled={busy}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file === undefined) return;
+                if (file.name === 'package-lock.json' || file.name === 'requirements.txt') {
+                  setManifestName(file.name);
+                } else if (file.name === 'package.json') {
+                  setManifestName('package.json');
+                }
+                void file.text().then(setManifestText);
+              }}
+            />
+            <label htmlFor="manifest-text" className="muted mono">
+              file contents
+            </label>
+            <textarea
+              id="manifest-text"
+              className="text mono"
+              rows={12}
+              value={manifestText}
+              onChange={(event) => setManifestText(event.target.value)}
+              placeholder='{"dependencies": {"lodash": "4.17.15"}}'
+              disabled={busy}
+            />
+            <div className="form-actions">
+              <SakugaButton
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setManifestName('package.json');
+                  setManifestText(
+                    JSON.stringify(
+                      {
+                        name: 'demo-project',
+                        dependencies: { lodash: '4.17.15', minimist: '1.2.0' },
+                      },
+                      null,
+                      2,
+                    ),
+                  );
+                }}>
+                load a sample
+              </SakugaButton>
+              <SakugaButton type="submit" disabled={busy || manifestText.trim() === ''}>
+                {busy ? 'scan running…' : 'launch scan'}
+              </SakugaButton>
+            </div>
+          </form>
+          {busy && <p className="muted mono">scan running: {session.ui.target}</p>}
+          {session.ui.state === 'error' && (
+            <p className="warn-list">last scan failed: {session.ui.errorMessage}</p>
+          )}
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="grid-single">

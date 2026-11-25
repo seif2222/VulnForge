@@ -251,6 +251,7 @@ body {
 }
 
 input.text,
+textarea.text,
 select,
 input[type='search'] {
   background: white;
