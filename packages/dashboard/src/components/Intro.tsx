@@ -1,3 +1,4 @@
+import { Forge2D } from './Forge2D.js';
 import { useEffect, useState } from 'react';
 
 import { usePrefersReducedMotion } from '../three/capabilities.js';
@@ -61,20 +62,8 @@ export function Intro(props: { readonly onStart: () => void }) {
           />
         ))}
       </svg>
-      <div className="intro-forge" role="img" aria-label="Forge, greeting">
-        <div className="intro-forge-glow" aria-hidden="true" />
-        <div className="intro-forge-antenna" />
-        <div className="intro-forge-head">
-          <div className="intro-forge-ear intro-forge-ear-left" />
-          <div className="intro-forge-ear intro-forge-ear-right" />
-          <div className="intro-forge-visor">
-            <span className="intro-forge-eye" />
-            <span className="intro-forge-eye" />
-          </div>
-        </div>
-        <div className="intro-forge-torso">
-          <div className="intro-forge-chest" />
-        </div>
+      <div className="intro-forge">
+        <Forge2D state="idle" size={200} />
       </div>
       <div className="intro-forge-pad" aria-hidden="true" />
       <h1 className="intro-title">

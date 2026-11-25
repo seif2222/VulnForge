@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 
 import { ForgeVisual } from '../components/ForgeVisual.js';
+import { SakugaButton, SakugaProgress } from '../components/Sakuga.js';
 import { agentStateFor } from '../lib/core.js';
 import { findingRows, rowForPackage } from '../lib/structure-map.js';
 import type { ScanSession } from '../lib/useScan.js';
@@ -46,6 +47,14 @@ export function LiveMonitorScreen(props: {
             <div className="label">OSV queries total</div>
           </div>
         </div>
+        {ui.queriesTotal > 0 && (
+          <div className="vf-progress">
+            <SakugaProgress
+              value={ui.queriesDone / ui.queriesTotal}
+              label={`${String(ui.queriesDone)} of ${String(ui.queriesTotal)} OSV queries`}
+            />
+          </div>
+        )}
         {showField && (
           <Suspense fallback={null}>
             <ScanFieldSceneLazy packages={session.scannedPackages} total={ui.queriesTotal} />
@@ -62,22 +71,20 @@ export function LiveMonitorScreen(props: {
                 ? ''
                 : ` · ${String(session.report.stats.totalVulnerabilities)} finding(s)`}
             </p>
-            <button
-              type="button"
-              className="primary"
+            <SakugaButton
               onClick={() => {
                 session.acknowledge();
                 onOpenFindings();
               }}>
               view findings
-            </button>
+            </SakugaButton>
           </div>
         )}
         {(ui.state === 'scanning' || ui.state === 'analyzing') && (
           <div className="form-actions">
-            <button type="button" className="primary" onClick={session.cancel}>
+            <SakugaButton variant="secondary" onClick={session.cancel}>
               cancel scan
-            </button>
+            </SakugaButton>
           </div>
         )}
       </section>

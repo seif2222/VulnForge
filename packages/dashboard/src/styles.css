@@ -1463,3 +1463,33 @@ input.text:focus-visible {
   gap: 18px;
   margin: 13px 0;
 }
+
+/* Sakuga VFX (MIT, vendored in src/vendor/sakuga): mapped onto the dashboard tokens. */
+:root {
+  --sk-card: var(--vf-bg-overlay);
+  --sk-ink: var(--vf-text-primary);
+  --sk-dim: var(--vf-text-secondary);
+  --sk-soft: var(--vf-accent-tint);
+  --sk-pri: var(--vf-accent);
+  --sk-pri-ink: var(--vf-text-primary);
+  --sk-acc: var(--vf-accent-strong);
+  --sk-track: var(--vf-border-strong);
+  --sk-on-pri: var(--vf-text-primary);
+  --sk-btn-line: var(--vf-accent-strong);
+  --sk-alt-line: var(--vf-border-strong);
+  --sk-fill: var(--vf-accent);
+  --sk-tick: var(--vf-success);
+  --sk-progress-width: 100%;
+}
+
+.vf-toast {
+  position: fixed;
+  left: var(--vf-space-lg);
+  bottom: var(--vf-space-lg);
+  z-index: 20;
+}
+
+.vf-progress {
+  margin: var(--vf-space-md) 0 var(--vf-space-xl);
+  padding-top: var(--vf-space-md);
+}

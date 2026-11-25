@@ -1,5 +1,8 @@
 import { useEffect, useState, type ReactElement } from 'react';
 
+import { SakugaToast } from './components/Sakuga.js';
+import { ClickFX } from './components/ClickFX.js';
+import { ForgeDock } from './components/ForgeDock.js';
 import { Intro } from './components/Intro.js';
 import { useScan } from './lib/useScan.js';
 import { AgentScreen } from './screens/AgentScreen.js';
@@ -125,6 +128,13 @@ export function App() {
     return () => clearTimeout(timer);
   }, [session.ui.state, session.acknowledge]);
 
+  const finished = session.ui.state === 'detected' || session.ui.state === 'completed';
+  const toastToken = finished ? `${session.ui.target ?? ''}@${session.ui.startedAt ?? ''}` : null;
+  const toastMessage =
+    session.report === null
+      ? 'Scan finished'
+      : `${String(session.report.stats.totalVulnerabilities)} findings`;
+
   if (!entered) {
     return <Intro onStart={() => setEntered(true)} />;
   }
@@ -187,6 +197,9 @@ export function App() {
           <SettingsScreen session={session} />
         )}
       </main>
+      <ClickFX />
+      <ForgeDock session={session} />
+      <SakugaToast token={toastToken} message={toastMessage} />
     </div>
   );
 }

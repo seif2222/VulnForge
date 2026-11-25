@@ -1,3 +1,4 @@
+import { SakugaButton } from '../components/Sakuga.js';
 import type { ScanSession } from '../lib/useScan.js';
 
 /**
@@ -59,9 +60,7 @@ export function ReportsScreen(props: { readonly session: ScanSession }) {
         )}
       </dl>
       <div className="form-actions">
-        <button type="button" className="primary" onClick={download}>
-          download report JSON
-        </button>
+        <SakugaButton onClick={download}>download report JSON</SakugaButton>
       </div>
     </section>
   );

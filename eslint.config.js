@@ -12,6 +12,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/*.d.ts',
       '**/*.generated.ts',
+      '**/vendor/**',
     ],
   },
   js.configs.recommended,

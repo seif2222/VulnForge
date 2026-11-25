@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { SakugaButton, SakugaCheckbox } from '../components/Sakuga.js';
 import type { StatusPayload } from '../lib/api.js';
 import { fetchStatus } from '../lib/api.js';
 import type { ScanSession } from '../lib/useScan.js';
@@ -57,23 +58,20 @@ export function NewScanScreen(props: { readonly session: ScanSession }) {
             disabled={busy}
           />
           {aiAvailable && (
-            <label htmlFor="scan-ai" className="checkbox-row">
-              <input
-                id="scan-ai"
-                type="checkbox"
+            <div className="checkbox-row">
+              <SakugaCheckbox
+                name="scan-ai"
                 checked={aiExplanations}
-                onChange={(event) => setAiExplanations(event.target.checked)}
-                disabled={busy}
-              />
-              <span className="muted mono">
+                onChange={setAiExplanations}
+                disabled={busy}>
                 ask Forge to explain each finding (AI suggestion, not evidence)
-              </span>
-            </label>
+              </SakugaCheckbox>
+            </div>
           )}
           <div className="form-actions">
-            <button type="submit" className="primary" disabled={busy || target.trim() === ''}>
+            <SakugaButton type="submit" disabled={busy || target.trim() === ''}>
               {busy ? 'scan running…' : 'launch scan'}
-            </button>
+            </SakugaButton>
           </div>
         </form>
         {busy && (
