@@ -417,3 +417,129 @@ input[type='search'] {
 .sidebar-state {
   order: 2;
 }
+
+/* ---- one Forge: paper-and-ink character ---- */
+.forge-ink {
+  stroke: var(--pc-ink);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.forge-shell {
+  fill: white;
+}
+
+.forge-shadow {
+  fill: var(--pc-shadow);
+}
+
+.forge-ear {
+  fill: var(--vf-accent);
+}
+
+.forge-visor {
+  fill: var(--vf-accent);
+}
+
+.forge-eye {
+  fill: white;
+}
+
+.forge-cheek {
+  fill: var(--pc-pink);
+}
+
+.forge-ground {
+  fill: color-mix(in srgb, var(--pc-ink) 18%, transparent);
+}
+
+.forge-line {
+  stroke: var(--pc-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.forge-chest {
+  opacity: 1;
+}
+
+.forge2d.scanning .forge-eyes {
+  animation: forge-eyes-scan 1.2s ease-in-out infinite;
+}
+
+/* the dark panels become paper panels with the character on lavender */
+.panel-forge {
+  background: var(--vf-accent-tint);
+  color: var(--pc-ink);
+  box-shadow: 6px 7px 0 var(--pc-shadow);
+}
+
+.panel-forge h2,
+.panel-forge .muted {
+  color: var(--pc-ink);
+}
+
+.panel-forge h2::before {
+  border-color: var(--pc-ink);
+}
+
+.forge-dock .dock-face {
+  background: var(--vf-accent-tint);
+}
+
+/* intro: same paper world, Forge waves hello */
+.intro {
+  --vf-text-primary: var(--pc-ink);
+  background-color: var(--vf-bg-base);
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--vf-accent) 20%, transparent) 1.6px,
+    transparent 1.8px
+  );
+  background-size: 22px 22px;
+}
+
+.intro .sky-ring {
+  stroke: var(--vf-border-strong);
+  fill: none;
+}
+
+.intro-forge {
+  width: 200px;
+  height: 200px;
+}
+
+.intro-forge-pad {
+  display: none;
+}
+
+.intro-title,
+.intro-typed {
+  color: var(--pc-ink);
+  font-weight: 900;
+}
+
+.intro-sub {
+  color: var(--vf-text-secondary);
+}
+
+.intro-start {
+  background: var(--vf-accent);
+  color: white;
+  border: 3px solid var(--pc-ink);
+  box-shadow: 4px 4px 0 var(--pc-ink);
+  font-weight: 900;
+}
+
+.intro .intro-sub {
+  color: var(--pc-ink) !important;
+  animation: none;
+  color: var(--vf-text-secondary);
+  opacity: 1;
+}
+
+.intro .intro-start:hover,
+.intro .intro-start:focus-visible {
+  background: var(--vf-accent-strong);
+  color: white;
+}
