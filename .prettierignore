@@ -4,3 +4,5 @@ coverage/
 pnpm-lock.yaml
 *.tsbuildinfopackages/dashboard/src/design-tokens.generated.css
 packages/cli/src/colors.generated.ts
+
+packages/dashboard/src/vendor/

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactElement } from 'react';
 
+import { SakugaToast } from './components/Sakuga.js';
 import { Intro } from './components/Intro.js';
 import { useScan } from './lib/useScan.js';
 import { AgentScreen } from './screens/AgentScreen.js';
@@ -125,6 +126,13 @@ export function App() {
     return () => clearTimeout(timer);
   }, [session.ui.state, session.acknowledge]);
 
+  const finished = session.ui.state === 'detected' || session.ui.state === 'completed';
+  const toastToken = finished ? `${session.ui.target ?? ''}@${session.ui.startedAt ?? ''}` : null;
+  const toastMessage =
+    session.report === null
+      ? 'Scan finished'
+      : `Done: ${String(session.report.stats.totalVulnerabilities)} finding(s)`;
+
   if (!entered) {
     return <Intro onStart={() => setEntered(true)} />;
   }
@@ -187,6 +195,7 @@ export function App() {
           <SettingsScreen session={session} />
         )}
       </main>
+      <SakugaToast token={toastToken} message={toastMessage} />
     </div>
   );
 }
