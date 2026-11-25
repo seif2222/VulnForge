@@ -1,0 +1,419 @@
+/* "Paper Cockpit" theme: Sakuga's own light key-animation paper (white cards,
+   ink outlines, lavender hard shadows, pink accents) as a top-bar cockpit.
+   Forge lives in a dock that reports the engine's real state. Colours are
+   derived from the design tokens only (hex-audit); every number is real. */
+
+:root {
+  --vf-bg-base: color-mix(in srgb, var(--vf-accent) 9%, white);
+  --vf-bg-raised: white;
+  --vf-bg-overlay: color-mix(in srgb, var(--vf-accent) 7%, white);
+  --vf-border-subtle: color-mix(in srgb, var(--vf-accent) 22%, white);
+  --vf-border-strong: color-mix(in srgb, var(--vf-accent) 55%, white);
+  --vf-text-primary: color-mix(in srgb, var(--vf-accent) 22%, black);
+  --vf-text-secondary: color-mix(in srgb, var(--vf-accent) 45%, black);
+  --vf-text-disabled: color-mix(in srgb, var(--vf-accent) 30%, gray);
+  --vf-text-inverse: white;
+  --vf-accent-on: white;
+  --vf-accent-tint: color-mix(in srgb, var(--vf-accent) 18%, white);
+  --vf-severity-critical-tint: color-mix(in srgb, var(--vf-severity-critical) 16%, white);
+  --vf-severity-high-tint: color-mix(in srgb, var(--vf-severity-high) 18%, white);
+  --vf-severity-medium-tint: color-mix(in srgb, var(--vf-severity-medium) 24%, white);
+  --vf-severity-low-tint: color-mix(in srgb, var(--vf-severity-low) 18%, white);
+  --pc-ink: var(--vf-text-primary);
+  --pc-shadow: color-mix(in srgb, var(--vf-accent) 38%, white);
+  --pc-pink: var(--vf-severity-critical);
+  --pc-screen: color-mix(in srgb, var(--vf-accent) 30%, black);
+
+  --sk-card: white;
+  --sk-ink: var(--pc-ink);
+  --sk-dim: var(--vf-text-secondary);
+  --sk-soft: var(--pc-shadow);
+  --sk-pri: var(--vf-accent);
+  --sk-pri-ink: white;
+  --sk-acc: var(--pc-pink);
+  --sk-track: var(--vf-border-strong);
+  --sk-on-pri: white;
+  --sk-btn-line: var(--pc-ink);
+  --sk-alt-line: var(--pc-ink);
+  --sk-fill: var(--vf-accent);
+  --sk-tick: var(--pc-ink);
+}
+
+body {
+  background-color: var(--vf-bg-base);
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--vf-accent) 20%, transparent) 1.6px,
+    transparent 1.8px
+  );
+  background-size: 22px 22px;
+  color: var(--pc-ink);
+}
+
+/* ---- top-bar cockpit instead of a sidebar ---- */
+.shell {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+}
+
+.sidebar {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--vf-space-lg);
+  padding: 10px var(--vf-space-xl);
+  background: var(--vf-accent);
+  border: none;
+  border-bottom: 4px solid var(--pc-ink);
+}
+
+.brand {
+  color: white;
+  font-weight: 900;
+  font-size: 19px;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.brand .accent {
+  color: var(--vf-severity-medium);
+}
+
+.tabs {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.tab {
+  width: auto;
+  white-space: nowrap;
+  padding: 7px 13px;
+  border: 2.5px solid transparent;
+  border-radius: 999px;
+  color: white;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.tab:hover {
+  background: color-mix(in srgb, white 20%, transparent);
+  color: white;
+}
+
+.tab[aria-selected='true'] {
+  background: white;
+  color: var(--pc-ink);
+  border-color: var(--pc-ink);
+  box-shadow: 3px 3px 0 var(--pc-ink);
+}
+
+.tab[aria-selected='true'] .icon {
+  color: var(--vf-accent);
+}
+
+.sidebar-state {
+  margin: 0 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--vf-space-sm);
+}
+
+.sidebar-state-label {
+  color: white;
+}
+
+.state-pill {
+  background: white;
+  color: var(--pc-ink);
+  border: 2.5px solid var(--pc-ink);
+  font-weight: 800;
+}
+
+.screen {
+  padding: var(--vf-space-xl) clamp(16px, 4vw, 56px) 150px;
+}
+
+/* ---- paper cards ---- */
+.panel,
+.stat-card {
+  background: white;
+  color: var(--pc-ink);
+  border: 3px solid var(--pc-ink);
+  border-radius: 15px;
+  box-shadow: 6px 7px 0 var(--pc-shadow);
+}
+
+.panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--vf-space-md);
+  color: var(--pc-ink);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.panel h2::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  background: var(--pc-pink);
+  border: 2px solid var(--pc-ink);
+  transform: rotate(45deg);
+}
+
+.muted {
+  color: var(--vf-text-secondary);
+}
+
+.stat-card {
+  background: var(--vf-accent-tint);
+}
+
+.stat-card .value {
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--pc-ink);
+}
+
+.stat-card .label {
+  margin-top: 6px;
+  color: var(--pc-ink);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.stat-card.sev-critical {
+  background: var(--pc-pink);
+  color: white;
+}
+
+.stat-card.sev-critical .value,
+.stat-card.sev-critical .label {
+  color: white;
+}
+
+.stat-card.sev-high {
+  background: var(--vf-severity-high);
+}
+
+.stat-card.sev-high .value {
+  color: var(--pc-ink);
+}
+
+/* ---- tables, badges, inputs ---- */
+.table th {
+  color: var(--vf-accent);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 3px solid var(--pc-ink);
+}
+
+.table td {
+  border-bottom: 1.5px solid var(--vf-border-subtle);
+}
+
+.table tbody tr:hover {
+  background: var(--vf-accent-tint);
+}
+
+.badge {
+  border: 2px solid var(--pc-ink);
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-weight: 900;
+  color: var(--pc-ink);
+}
+
+.badge.critical {
+  background: var(--pc-pink);
+  color: white;
+}
+
+.badge.high {
+  background: var(--vf-severity-high);
+  color: var(--pc-ink);
+}
+
+.badge.medium {
+  background: var(--vf-severity-medium);
+  color: var(--pc-ink);
+}
+
+.badge.low {
+  background: var(--vf-severity-low-tint);
+  color: var(--pc-ink);
+}
+
+input.text,
+select,
+input[type='search'] {
+  background: white;
+  color: var(--pc-ink);
+  border: 2.5px solid var(--pc-ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--pc-shadow);
+}
+
+.warn-list,
+.empty {
+  background: var(--vf-severity-medium-tint);
+  color: var(--pc-ink);
+  border: 3px solid var(--pc-ink);
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+.empty {
+  padding: var(--vf-space-xl);
+  text-align: center;
+}
+
+/* Forge sits on a dark screen so the character keeps its glow on paper. */
+.panel-forge {
+  background: var(--pc-screen);
+  color: white;
+  box-shadow: 6px 7px 0 var(--pc-pink);
+}
+
+.panel-forge h2,
+.panel-forge .muted {
+  color: white;
+}
+
+.panel-forge h2::before {
+  border-color: white;
+}
+
+/* ---- Forge dock: Forge reports the engine's real state ---- */
+.forge-dock {
+  position: fixed;
+  right: 20px;
+  bottom: 18px;
+  z-index: 15;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  max-width: min(440px, calc(100vw - 40px));
+}
+
+.forge-dock .dock-bubble {
+  position: relative;
+  padding: 12px 16px;
+  background: white;
+  color: var(--pc-ink);
+  border: 3px solid var(--pc-ink);
+  border-radius: 16px 16px 4px 16px;
+  box-shadow: 5px 5px 0 var(--pc-pink);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.forge-dock .who {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vf-accent);
+}
+
+.forge-dock .dock-bubble strong {
+  color: var(--pc-pink);
+}
+
+.forge-dock .dock-face {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--pc-screen);
+  border: 3px solid var(--pc-ink);
+  border-radius: 50%;
+  box-shadow: 4px 4px 0 var(--pc-shadow);
+}
+
+.forge-dock .dock-hint {
+  display: block;
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--vf-text-secondary);
+}
+
+.hint-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--vf-space-md);
+  background: var(--vf-accent-tint);
+  border: 2.5px dashed var(--pc-ink);
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+/* layout fixes */
+.shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.shell > * {
+  min-width: 0;
+}
+
+.tabs {
+  flex: 1;
+  min-width: 0;
+}
+
+.tab {
+  padding: 7px 10px;
+  font-size: 12.5px;
+}
+
+.grid-overview {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.grid-overview .panel-forge {
+  display: none;
+}
+
+.grid-overview > .panel-posture,
+.grid-overview > .forge-says {
+  grid-column: 1;
+  grid-row: auto;
+}
+
+.grid-live,
+.grid-single {
+  min-width: 0;
+}
+
+/* the intro is a dark scene: keep its light text */
+.intro {
+  --vf-text-primary: white;
+  --vf-text-secondary: color-mix(in srgb, var(--vf-accent) 40%, white);
+}
+
+.sidebar {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.tabs {
+  order: 3;
+  flex-basis: 100%;
+}
+
+.sidebar-state {
+  order: 2;
+}

@@ -49,7 +49,7 @@ export function FindingsScreen(props: { readonly session: ScanSession }) {
     return <div className="empty">no report loaded — run a scan first</div>;
   }
 
-  const selectedRow = rows.find((row) => row.findingKey === selected) ?? null;
+  const selectedRow = rows.find((row) => row.findingKey === selected) ?? rows[0] ?? null;
   const suggestion =
     selectedRow === null
       ? null

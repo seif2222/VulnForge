@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactElement } from 'react';
 
 import { SakugaToast } from './components/Sakuga.js';
+import { ForgeDock } from './components/ForgeDock.js';
 import { Intro } from './components/Intro.js';
 import { useScan } from './lib/useScan.js';
 import { AgentScreen } from './screens/AgentScreen.js';
@@ -131,7 +132,7 @@ export function App() {
   const toastMessage =
     session.report === null
       ? 'Scan finished'
-      : `Done: ${String(session.report.stats.totalVulnerabilities)} finding(s)`;
+      : `${String(session.report.stats.totalVulnerabilities)} findings`;
 
   if (!entered) {
     return <Intro onStart={() => setEntered(true)} />;
@@ -195,6 +196,7 @@ export function App() {
           <SettingsScreen session={session} />
         )}
       </main>
+      <ForgeDock session={session} />
       <SakugaToast token={toastToken} message={toastMessage} />
     </div>
   );
