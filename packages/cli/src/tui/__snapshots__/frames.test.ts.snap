@@ -1,43 +1,43 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`tui golden frames (ANSI-stripped) > ai agent at 100x30 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
-────────────────────────────────────────────────────────────────────────────────────────────────────
+" VULNFORGE   1 Overview   2 Scan   3 Findings   4 Tree  [5 AI]  6 History   7 Reports   8 Settings  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                                                                                     
- Forge explains and suggests only — never creates findings, never fails a scan                      
+ ▌ FORGE  explains and suggests only — never creates findings, never fails a scan                   
  state: idle                                                                                        
                                                                                                     
-                       =                                                                            
-                       =                                                                            
-                       =                                                                            
-                       =                                                                            
-           @@@@@@@@@@@@=@@@@@@@@@@@%                                                                
-          @@@%%%%%%%%%%%%%%%%%%%%%%%%                                                               
-          @@@%%%%%%%%%%%%%%%%%%%%%%%%                                                               
-         +@@@%%.................%%%%%+                                                              
-        ++@@@%%.................%%%%%++                                                             
-       +++@@@%%.................%%%%%+++                                                            
-        ++@@@%%.................%%%%%++                                                             
-        ++@@@%%%%%%%%%%%%%%%%%%%%%%%%++                                                             
-          @@@%%%%%%%%%%%%%%%%%%%%%%%%                                                               
-          @@%%%%%%%%%%%%%%%%%%%%%%%%%                                                               
-          %%%%%%%%%%%%%%%%%%%%%%%%%%%                                                               
-           %%%%%%%%%%%%%%%%%%%%%%%%%                                                                
+           o                                                                                        
+           |                                                                                        
+   +-------------+                                                                                  
+  [| .--------. |]                                                                                  
+  [| | ||  || | |]                                                                                  
+   | \`--------\` |                                                                                   
+   +-------------+                                                                                  
+      +-------+                                                                                     
+      | forge |                                                                                     
+      +-------+                                                                                     
                                                                                                     
-               @@@@@@@@@@@@@@@@%                                                                    
-            @@ @@@%%%%%%%%%%%%%% @@                                                                 
-           @@@%@@@%%...=...%%%%%@@%%                                                                
-           @@%%@@@%%.......%%%%%@@%%                                                                
-           %%%%@@%%%%%%%%%%%%%%%%%%%                                                                
-────────────────────────────────────────────────────────────────────────────────────────────────────
+ ▌ 1 AI SUGGESTIONS                                                                                 
+  CVE-2020-14343|PyYAML@5.3.1 → 5.4                                                                 
+    Upgrade PyYAML to 5.4 or later; the yaml.full_load sink this advisory covers was removed from th
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > dependency tree at 100x30 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
-────────────────────────────────────────────────────────────────────────────────────────────────────
+" VULNFORGE   1 Overview   2 Scan   3 Findings  [4 Tree]  5 AI   6 History   7 Reports   8 Settings  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                                                                                     
- 3 packages 3 direct · 0 transitive                                                                 
+ ▌ 3 PACKAGES  3 direct · 0 transitive                                                              
                                                                                                     
  ├─ ■ Jinja2@3.1.2                                                                                  
  ├─ ● PyYAML@5.3.1                                                                                  
@@ -62,15 +62,15 @@ exports[`tui golden frames (ANSI-stripped) > dependency tree at 100x30 1`] = `
                                                                                                     
                                                                                                     
                                                                                                     
-────────────────────────────────────────────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > ecosystem picker for a mixed npm+pypi project at 100x30 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
-────────────────────────────────────────────────────────────────────────────────────────────────────
+" VULNFORGE   1 Overview  [2 Scan]  3 Findings   4 Tree   5 AI   6 History   7 Reports   8 Settings  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                                                                                     
- Start New Scan                                                                                     
+ ▌ START NEW SCAN                                                                                   
                                                                                                     
   ┌──────────────────────────────────────────────────────────────────────┐                          
   │                                                                      │                          
@@ -78,7 +78,7 @@ exports[`tui golden frames (ANSI-stripped) > ecosystem picker for a mixed npm+py
                                                                                                     
   type a project path, then enter to scan (absolute or relative to cwd)                             
                                                                                                     
-  Preflight                                                                                         
+ ▌ PREFLIGHT                                                                                        
   ✓ target exists  /tmp/project/vuln-ai-project                                                     
   ✓ manifest       package.json                                                                     
   ✓ ecosystem      npm                                                                              
@@ -95,15 +95,15 @@ exports[`tui golden frames (ANSI-stripped) > ecosystem picker for a mixed npm+py
                                                                                                     
                                                                                                     
                                                                                                     
-────────────────────────────────────────────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > findings at 100x30 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
-────────────────────────────────────────────────────────────────────────────────────────────────────
+" VULNFORGE   1 Overview   2 Scan  [3 Findings]  4 Tree   5 AI   6 History   7 Reports   8 Settings  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                                                                                     
- 4 findings 1 critical · 1 high · 2 medium                                                          
+ ▌ 4 FINDINGS  1 critical · 1 high · 2 medium                                                       
                                                                                                     
    ID                     PACKAGE@VERSION                              CVSS  SCORE  FIX             
  ● CVE-2020-14343         PyYAML@5.3.1                                   9.8 95     5.4             
@@ -128,16 +128,17 @@ exports[`tui golden frames (ANSI-stripped) > findings at 100x30 1`] = `
                                                                                                     
                                                                                                     
                                                                                                     
-────────────────────────────────────────────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > live monitor mid-scan at 100x30 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings  LIVE MON
-────────────────────────────────────────────────────────────────────────────────────────────────────
+" VF   1 Ov   2 Sc   3 Fi   4 Tr   5 AI   6 Hi   7 Re   8 Se  LIVE MONITOR                           
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                                                                                     
- Live Monitor scanning · /tmp/project/vulnerable-npm · started 09:30:00                             
+ ▌ LIVE MONITOR scanning · /tmp/project/vulnerable-npm · started 09:30:00                           
  Querying OSV — 3 / 12 queries · minimist@1.2.5                                                     
+ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 3/12 queries                                      
                                                                                                     
                                                                                                     
                                                                                                     
@@ -160,14 +161,13 @@ exports[`tui golden frames (ANSI-stripped) > live monitor mid-scan at 100x30 1`]
                                                                                                     
                                                                                                     
                                                                                                     
-                                                                                                    
-────────────────────────────────────────────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit       scanning · 3/12 queries · 09:30:00 "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > overview at 80 x 24 1`] = `
-" VF  1 Ov  2 Sc  3 Fi  4 Tr  5 AI  6 Hi  7 Re  8 Se                             
-────────────────────────────────────────────────────────────────────────────────
+" VF  [1 Ov]  2 Sc   3 Fi   4 Tr   5 AI   6 Hi   7 Re   8 Se                     
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  vulnerable-example pypi · requirements.txt                                     
  generated 2026-10-08T12:00:00Z · schema v6                                     
                                                                                 
@@ -176,83 +176,77 @@ exports[`tui golden frames (ANSI-stripped) > overview at 80 x 24 1`] = `
 │ Dependency Inven│ │ Critical        │ │ High            │ │ Unresolved Requi│ 
 └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ 
                                                                                 
- Distribution (share of total findings)                                         
-  critical  ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)              
-  high      ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)              
-  medium    ███████████████████████░░░░░░░░░░░░░░░░░░░░░░░ 2 (50%)              
-  low       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0 (0%)               
+ ▌ DISTRIBUTION  share of total findings                                        
+  [CRITICAL] ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)             
+  [HIGH]    ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)              
+  [MEDIUM]  ███████████████████████░░░░░░░░░░░░░░░░░░░░░░░ 2 (50%)              
+  [LOW]     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0 (0%)               
                                                                                 
- Top priority                                                                   
+ ▌ TOP PRIORITY                                                                 
   ● CVE-2020-14343       PyYAML@5.3.1                   score 95 · fix 5.4      
   ▲ CVE-2018-18074       requests@2.19.1                score 80 · fix 2.20.0   
   ■ CVE-2023-32681       requests@2.19.1                score 60 · fix 2.31.0   
   ■ CVE-2024-22195       Jinja2@3.1.2                   score 60 · fix 3.1.3    
                                                                                 
-────────────────────────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                      "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > overview at 100 x 30 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
-────────────────────────────────────────────────────────────────────────────────────────────────────
- vulnerable-example pypi · requirements.txt                                                         
- generated 2026-10-08T12:00:00Z · schema v6                                                         
+" VULNFORGE  [1 Overview]  2 Scan   3 Findings   4 Tree   5 AI   6 History   7 Reports   8 Settings  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ vulnerable-example pypi · requirements.txt                                            o            
+ generated 2026-10-08T12:00:00Z · schema v6                                            |            
+                                                                               +-------------+      
+┌────────────────┐ ┌────────────────┐ ┌────────────────┐ ┌────────────────┐   [| .--------. |]      
+│ 3              │ │ 1              │ │ 1              │ │ 0              │   [| | ||  || | |]      
+│ Dependency Inve│ │ Critical       │ │ High           │ │ Unresolved Requ│    | \`--------\` |       
+└────────────────┘ └────────────────┘ └────────────────┘ └────────────────┘    +-------------+      
+                                                                                  +-------+         
+ ▌ DISTRIBUTION  share of total findings                                          | forge |         
+  [CRITICAL] ███████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)                   +-------+         
+  [HIGH]    ███████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)                                      
+  [MEDIUM]  █████████████████████░░░░░░░░░░░░░░░░░░░░░ 2 (50%)                                      
+  [LOW]     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0 (0%)                                       
                                                                                                     
-┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐                =            
-│ 3             │ │ 1             │ │ 1             │ │ 0             │                =            
-│ Dependency Inv│ │ Critical      │ │ High          │ │ Unresolved Req│                =            
-└───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘                =            
-                                                                           @@@@@@@@@@@@@@@@@@@@@@@%%
- Distribution (share of total findings)                                    @@@%%%%%%%%%%%%%%%%%%%%%%
-  critical  ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)                @@@%%...............%%%%%
-  high      ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)               +@@@%%.++++.....++++.%%%%%
-  medium    ████████████████████░░░░░░░░░░░░░░░░░░░ 2 (50%)               +@@@%%.++++.....++++.%%%%%
-  low       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0 (0%)                +@@@%%.++++.....++++.%%%%%
-                                                                          +@@@%%%%%%%%%%%%%%%%%%%%%%
- Top priority                                                              @@@%%%%%%%%%%%%%%%%%%%%%%
-  ● CVE-2020-14343       PyYAML@5.3.1            score 95 · fix 5.4        @@%%%%%%%%%%%%%%%%%%%%%%%
-  ▲ CVE-2018-18074       requests@2.19.1         score 80 · fix 2.20.0     %%%%%%%%%%%%%%%%%%%%%%%%%
-  ■ CVE-2023-32681       requests@2.19.1         score 60 · fix 2.31.0      %%%%%%%%%%%%%%%%%%%%%%% 
-  ■ CVE-2024-22195       Jinja2@3.1.2            score 60 · fix 3.1.3                               
-                                                                                @@@@@@@@@@@@@@%     
-                                                                            @@@ @@%%.......%%%% @@% 
-                                                                            @@%%@@%%...=...%%%%@@%% 
-                                                                            @%%%@@%%%%%%%%%%%%%@@%% 
-                                                                            %%% %%%%%%%%%%%%%%% %%% 
-                                                                                %%%%%%%%%%%%%%%     
+ ▌ TOP PRIORITY                                                                                     
+  ● CVE-2020-14343       PyYAML@5.3.1               score 95 · fix 5.4                              
+  ▲ CVE-2018-18074       requests@2.19.1            score 80 · fix 2.20.0                           
+  ■ CVE-2023-32681       requests@2.19.1            score 60 · fix 2.31.0                           
+  ■ CVE-2024-22195       Jinja2@3.1.2               score 60 · fix 3.1.3                            
                                                                                                     
-────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > overview at 142 x 42 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings                                                    
-──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- vulnerable-example pypi · requirements.txt                                                                                                   
- generated 2026-10-08T12:00:00Z · schema v6                                                                                                   
+" VULNFORGE  [1 Overview]  2 Scan   3 Findings   4 Tree   5 AI   6 History   7 Reports   8 Settings                                            
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ vulnerable-example pypi · requirements.txt                                                                                      o            
+ generated 2026-10-08T12:00:00Z · schema v6                                                                                      |            
+                                                                                                                         +-------------+      
+┌──────────────────────────┐ ┌──────────────────────────┐ ┌──────────────────────────┐ ┌──────────────────────────┐     [| .--------. |]      
+│ 3                        │ │ 1                        │ │ 1                        │ │ 0                        │     [| | ||  || | |]      
+│ Dependency Inventory     │ │ Critical                 │ │ High                     │ │ Unresolved Requirements  │      | \`--------\` |       
+└──────────────────────────┘ └──────────────────────────┘ └──────────────────────────┘ └──────────────────────────┘      +-------------+      
+                                                                                                                            +-------+         
+ ▌ DISTRIBUTION  share of total findings                                                                                    | forge |         
+  [CRITICAL] █████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)                   +-------+         
+  [HIGH]    █████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)                                      
+  [MEDIUM]  ██████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2 (50%)                                      
+  [LOW]     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0 (0%)                                       
                                                                                                                                               
-┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐                  =            
-│ 3                       │ │ 1                       │ │ 1                       │ │ 0                       │                  =            
-│ Dependency Inventory    │ │ Critical                │ │ High                    │ │ Unresolved Requirements │                  =            
-└─────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘                  =            
-                                                                                                                     @@@@@@@@@@@@@@@@@@@@@@@%%
- Distribution (share of total findings)                                                                              @@@%%%%%%%%%%%%%%%%%%%%%%
-  critical  ████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)                @@@%%...............%%%%%
-  high      ████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1 (25%)               +@@@%%.++++.....++++.%%%%%
-  medium    █████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2 (50%)               +@@@%%.++++.....++++.%%%%%
-  low       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0 (0%)                +@@@%%.++++.....++++.%%%%%
-                                                                                                                    +@@@%%%%%%%%%%%%%%%%%%%%%%
- Top priority                                                                                                        @@@%%%%%%%%%%%%%%%%%%%%%%
-  ● CVE-2020-14343       PyYAML@5.3.1                                                      score 95 · fix 5.4        @@%%%%%%%%%%%%%%%%%%%%%%%
-  ▲ CVE-2018-18074       requests@2.19.1                                                   score 80 · fix 2.20.0     %%%%%%%%%%%%%%%%%%%%%%%%%
-  ■ CVE-2023-32681       requests@2.19.1                                                   score 60 · fix 2.31.0      %%%%%%%%%%%%%%%%%%%%%%% 
-  ■ CVE-2024-22195       Jinja2@3.1.2                                                      score 60 · fix 3.1.3                               
-                                                                                                                          @@@@@@@@@@@@@@%     
-                                                                                                                      @@@ @@%%.......%%%% @@% 
-                                                                                                                      @@%%@@%%...=...%%%%@@%% 
-                                                                                                                      @%%%@@%%%%%%%%%%%%%@@%% 
-                                                                                                                      %%% %%%%%%%%%%%%%%% %%% 
-                                                                                                                          %%%%%%%%%%%%%%%     
+ ▌ TOP PRIORITY                                                                                                                               
+  ● CVE-2020-14343       PyYAML@5.3.1                                                         score 95 · fix 5.4                              
+  ▲ CVE-2018-18074       requests@2.19.1                                                      score 80 · fix 2.20.0                           
+  ■ CVE-2023-32681       requests@2.19.1                                                      score 60 · fix 2.31.0                           
+  ■ CVE-2024-22195       Jinja2@3.1.2                                                         score 60 · fix 3.1.3                            
                                                                                                                                               
                                                                                                                                               
                                                                                                                                               
@@ -266,104 +260,101 @@ exports[`tui golden frames (ANSI-stripped) > overview at 142 x 42 1`] = `
                                                                                                                                               
                                                                                                                                               
                                                                                                                                               
-──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                                                                    "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > overview welcome hero (no report yet) at 80 x 24 1`] = `
-" VF  1 Ov  2 Sc  3 Fi  4 Tr  5 AI  6 Hi  7 Re  8 Se                             
-────────────────────────────────────────────────────────────────────────────────
+" VF  [1 Ov]  2 Sc   3 Fi   4 Tr   5 AI   6 Hi   7 Re   8 Se                     
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                                                                
                          Hello, I'm Forge. Let's start.                         
                                                                                 
-                                        =                                       
-                                        =                                       
-                                   @@@@@@@@@@%                                  
-                                  +@%.......%%+                                 
-                                  +@%.......%%+                                 
-                                   @%%%%%%%%%%                                  
-                                   %%%%%%%%%%%                                  
-                                                                                
-                                   @%@%...%%@%                                  
-                                   %%@%%%%%%%%                                  
-                                                                                
-                                                                                
+                                       o                                        
+                                       |                                        
+                               +-------------+                                  
+                              [| .--------. |]                                  
+                              [| | ||  || | |]                                  
+                               | \`--------\` |                                   
+                               +-------------+                                  
+                                  +-------+                                     
+                                  | forge |                                     
+                                  +-------+                                     
                                                                                 
                          s  scan a project by its path                          
                          1-8  switch between the views                          
                          l  follow the scan live                                
                                                                                 
               open an existing report:  vulnforge ui <report.json>              
-────────────────────────────────────────────────────────────────────────────────
+                                                                                
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                      "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > overview welcome hero (no report yet) at 100 x 30 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
-────────────────────────────────────────────────────────────────────────────────────────────────────
+" VULNFORGE  [1 Overview]  2 Scan   3 Findings   4 Tree   5 AI   6 History   7 Reports   8 Settings  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
                                    Hello, I'm Forge. Let's start.                                   
                                                                                                     
-                                                  =                                                 
-                                                  =                                                 
-                                                  =                                                 
-                                          @@@@@@@@@@@@@@@@%                                         
-                                          @@%%%%%%%%%%%%%%%                                         
-                                         +@@%...........%%%+                                        
-                                        ++@@%...........%%%++                                       
-                                         +@@%%%%%%%%%%%%%%%+                                        
-                                          @@%%%%%%%%%%%%%%%                                         
-                                          %%%%%%%%%%%%%%%%%                                         
-                                                                                                    
-                                             @@@@@@@@@@%                                            
-                                           @%@@%.....%%%@@                                          
-                                          @@%@@%.....%%%@%%                                         
-                                           %%%%%%%%%%%%%%%                                          
-                                                                                                    
-                                                                                                    
-                                                                                                    
+                                                 o                                                  
+                                                 |                                                  
+                                         +-------------+                                            
+                                        [| .--------. |]                                            
+                                        [| | ||  || | |]                                            
+                                         | \`--------\` |                                             
+                                         +-------------+                                            
+                                            +-------+                                               
+                                            | forge |                                               
+                                            +-------+                                               
                                                                                                     
                                    s  scan a project by its path                                    
                                    1-8  switch between the views                                    
                                    l  follow the scan live                                          
                                                                                                     
                         open an existing report:  vulnforge ui <report.json>                        
-────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > overview welcome hero (no report yet) at 142 x 42 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings                                                    
-──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+" VULNFORGE  [1 Overview]  2 Scan   3 Findings   4 Tree   5 AI   6 History   7 Reports   8 Settings                                            
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
                                                                                                                                               
                                                         Hello, I'm Forge. Let's start.                                                        
                                                                                                                                               
-                                                                       =                                                                      
-                                                                       =                                                                      
-                                                                       =                                                                      
-                                                                       =                                                                      
-                                                           @@@@@@@@@@@@=@@@@@@@@@@@%                                                          
-                                                          @@@%%%%%%%%%%%%%%%%%%%%%%%%                                                         
-                                                          @@@%%%%%%%%%%%%%%%%%%%%%%%%                                                         
-                                                         +@@@%%.................%%%%%+                                                        
-                                                        ++@@@%%.................%%%%%++                                                       
-                                                       +++@@@%%.................%%%%%+++                                                      
-                                                        ++@@@%%.................%%%%%++                                                       
-                                                        ++@@@%%%%%%%%%%%%%%%%%%%%%%%%++                                                       
-                                                          @@@%%%%%%%%%%%%%%%%%%%%%%%%                                                         
-                                                          @@%%%%%%%%%%%%%%%%%%%%%%%%%                                                         
-                                                          %%%%%%%%%%%%%%%%%%%%%%%%%%%                                                         
-                                                           %%%%%%%%%%%%%%%%%%%%%%%%%                                                          
-                                                                                                                                              
-                                                               @@@@@@@@@@@@@@@@%                                                              
-                                                            @@ @@@%%%%%%%%%%%%%% @@                                                           
-                                                           @@@%@@@%%...=...%%%%%@@%%                                                          
-                                                           @@%%@@@%%.......%%%%%@@%%                                                          
-                                                           %%%%@@%%%%%%%%%%%%%%%%%%%                                                          
-                                                            %% %%%%%%%%%%%%%%%%% %%                                                           
-                                                                                                                                              
-                                                                                                                                              
-                                                                                                                                              
-                                                                                                                                              
-                                                                                                                                              
+                                                                      o                                                                       
+                                                                      |                                                                       
+                                                              +-------------+                                                                 
+                                                             [| .--------. |]                                                                 
+                                                             [| | ||  || | |]                                                                 
+                                                              | \`--------\` |                                                                  
+                                                              +-------------+                                                                 
+                                                                 +-------+                                                                    
+                                                                 | forge |                                                                    
+                                                                 +-------+                                                                    
                                                                                                                                               
                                                         s  scan a project by its path                                                         
                                                         1-8  switch between the views                                                         
@@ -371,15 +362,24 @@ exports[`tui golden frames (ANSI-stripped) > overview welcome hero (no report ye
                                                                                                                                               
                                              open an existing report:  vulnforge ui <report.json>                                             
                                                                                                                                               
-──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                                                                    "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > settings at 100x30 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
-────────────────────────────────────────────────────────────────────────────────────────────────────
+" VULNFORGE   1 Overview   2 Scan   3 Findings   4 Tree   5 AI   6 History   7 Reports  [8 Settings] 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                                                                                     
- Settings presence only — no secret values are ever shown                                           
+ ▌ SETTINGS  presence only — no secret values are ever shown                                        
                                                                                                     
   tool version       0.0.0-test                                                                     
   node               v22.0.0                                                                        
@@ -404,15 +404,15 @@ exports[`tui golden frames (ANSI-stripped) > settings at 100x30 1`] = `
                                                                                                     
                                                                                                     
                                                                                                     
-────────────────────────────────────────────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
 `;
 
 exports[`tui golden frames (ANSI-stripped) > start new scan with a blocked preflight at 100x30 1`] = `
-" VulnForge  1 Overview  2 Scan  3 Findings  4 Tree  5 AI  6 History  7 Reports  8 Settings          
-────────────────────────────────────────────────────────────────────────────────────────────────────
+" VULNFORGE   1 Overview  [2 Scan]  3 Findings   4 Tree   5 AI   6 History   7 Reports   8 Settings  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                                                                                     
- Start New Scan                                                                                     
+ ▌ START NEW SCAN                                                                                   
                                                                                                     
   ┌──────────────────────────────────────────────────────────────────────┐                          
   │ ../nope                                                              │                          
@@ -420,7 +420,7 @@ exports[`tui golden frames (ANSI-stripped) > start new scan with a blocked prefl
                                                                                                     
   type a project path, then enter to scan (absolute or relative to cwd)                             
                                                                                                     
-  Preflight                                                                                         
+ ▌ PREFLIGHT                                                                                        
   ✗ target exists  /tmp/project/nope                                                                
   ✗ manifest       no supported manifest found                                                      
   ✗ ecosystem      unknown                                                                          
@@ -437,6 +437,6 @@ exports[`tui golden frames (ANSI-stripped) > start new scan with a blocked prefl
                                                                                                     
                                                                                                     
                                                                                                     
-────────────────────────────────────────────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  1-8 tabs · s scan · l live · c cancel · r rescan · q quit                                          "
 `;

@@ -6,13 +6,23 @@ import {
   type Report,
 } from '@vulnforge/core';
 import { TUI_COLORS } from '../colors.generated.js';
+import { scanConstellationFrame, type OrbState, type RenderCapabilities } from './render3d.js';
+import { forgeArt, FORGE_ART_WIDTH } from './forge-art.js';
 import {
-  forgeFrame,
-  scanConstellationFrame,
-  type OrbState,
-  type RenderCapabilities,
-} from './render3d.js';
-import { bold, cell, dim, fg, fitLine, padLine, severityGlyph, visibleLength } from './theme.js';
+  bg,
+  bold,
+  cell,
+  dim,
+  fg,
+  fitLine,
+  heading,
+  padLine,
+  progressBar,
+  SEVERITY_COLORS,
+  severityGlyph,
+  severityPill,
+  visibleLength,
+} from './theme.js';
 import { TAB_IDS, type TuiModel } from './model.js';
 
 /**
@@ -30,7 +40,7 @@ const ORB_FOR_AGENT: Record<string, OrbState> = {
   error: 'ERROR',
 };
 
-const ROBOT_WIDTH = 26;
+const ROBOT_WIDTH = FORGE_ART_WIDTH + 2;
 
 export function composeFrame(
   model: TuiModel,
@@ -72,19 +82,26 @@ function tooSmallFrame(width: number, height: number): string[] {
 }
 
 function headerLine(model: TuiModel, width: number, caps: RenderCapabilities): string {
-  const compact = width < 96;
-  const brand = bold(caps, fg(caps, TUI_COLORS.accent, compact ? ' VF ' : ' VulnForge '));
+  const compact = width < (model.liveOpen ? 130 : 96);
+  const onBar = (text: string): string =>
+    bg(caps, TUI_COLORS.accent, bold(caps, fg(caps, TUI_COLORS.textPrimary, text)));
+  const brand = onBar(compact ? ' VF ' : ' VULNFORGE ');
   const tabs = TAB_IDS.map((id) => {
     const label = compact ? compactLabel(id) : shortLabel(id);
     const text = ` ${id} ${label} `;
-    return model.tab === id && !model.liveOpen
-      ? bold(caps, fg(caps, TUI_COLORS.accent, text))
-      : dim(caps, text);
-  }).join('');
+    if (model.tab === id && !model.liveOpen) {
+      return caps.color === 'mono'
+        ? `[${id} ${label}]`
+        : bg(caps, TUI_COLORS.textPrimary, bold(caps, fg(caps, TUI_COLORS.accent, text)));
+    }
+    return onBar(text);
+  }).join(caps.color === 'mono' ? ' ' : bg(caps, TUI_COLORS.accent, ' '));
   const live = model.liveOpen
-    ? bold(caps, fg(caps, TUI_COLORS.severityHigh, ' LIVE MONITOR '))
+    ? bg(caps, TUI_COLORS.severityHigh, bold(caps, fg(caps, TUI_COLORS.accentOn, ' LIVE MONITOR ')))
     : '';
-  return fitLine(brand + tabs + live, width);
+  const line = fitLine(brand + bg(caps, TUI_COLORS.accent, ' ') + tabs + live, width);
+  const missing = width - visibleLength(line);
+  return line + (missing > 0 ? bg(caps, TUI_COLORS.accent, ' '.repeat(missing)) : '');
 }
 
 function compactLabel(id: number): string {
@@ -118,8 +135,8 @@ function shortLabel(id: number): string {
 }
 
 function dividerLine(width: number, caps: RenderCapabilities): string {
-  const glyph = caps.unicode ? '─' : '-';
-  return dim(caps, glyph.repeat(width));
+  const glyph = caps.unicode ? '━' : '-';
+  return fg(caps, TUI_COLORS.accent, glyph.repeat(width));
 }
 
 function footerLine(model: TuiModel, width: number, caps: RenderCapabilities): string {
@@ -236,18 +253,8 @@ function welcomeLines(
   caps: RenderCapabilities,
   t: number,
 ): string[] {
-  const robotWidth = Math.min(width - 8, 60);
-  const robotHeight = Math.min(Math.max(8, Math.floor((height - 10) * 0.6)), 16);
-  let robot = forgeFrame(orbFor(model), robotWidth, robotHeight, caps, t);
-  // The robot's true row count varies with its art; shrink until the block fits.
   const chrome = 8; // greeting, spacing, three key hints, the open-report line
-  for (
-    let candidate = robotHeight - 2;
-    robot.length + chrome > height && candidate >= 2;
-    candidate -= 2
-  ) {
-    robot = forgeFrame(orbFor(model), robotWidth, candidate, caps, t);
-  }
+  const robot = height >= chrome + 10 ? forgeArt(orbFor(model), caps, t) : [];
 
   const block: string[] = [];
   block.push(
@@ -341,20 +348,30 @@ function overviewLines(
 
   // Severity distribution, share of total under its real name.
   const total = overview.distribution.reduce((sum, row) => sum + row.count, 0);
-  left.push(bold(caps, ' Distribution (share of total findings)'));
+  left.push(heading(caps, 'Distribution', 'share of total findings'));
   if (total === 0) {
     left.push(dim(caps, '  no findings'));
   }
   const barMax = Math.max(8, contentWidth - 34);
   for (const row of overview.distribution) {
     const filled = total === 0 ? 0 : Math.round((row.count / total) * barMax);
-    const bar = '█'.repeat(filled) + dim(caps, '░'.repeat(barMax - filled));
-    left.push(`  ${cell(row.severity, 9)} ${bar} ${String(row.count)} (${row.sharePercent}%)`);
+    const sevKey = (['critical', 'high', 'medium', 'low'] as const).find(
+      (k) => k === row.severity.toLowerCase(),
+    );
+    const sevColor = sevKey === undefined ? TUI_COLORS.accent : SEVERITY_COLORS[sevKey];
+    const bar =
+      fg(caps, sevColor, (caps.unicode ? '█' : '#').repeat(filled)) +
+      dim(caps, (caps.unicode ? '░' : '.').repeat(barMax - filled));
+    const label =
+      sevKey === undefined
+        ? cell(row.severity, 9)
+        : padLine(severityPill(caps, sevKey, row.severity), 9);
+    left.push(`  ${label} ${bar} ${String(row.count)} (${row.sharePercent}%)`);
   }
   left.push('');
 
   if (overview.priorityRows.length > 0) {
-    left.push(bold(caps, ' Top priority'));
+    left.push(heading(caps, 'Top priority'));
     for (const row of overview.priorityRows.slice(0, 5)) {
       const fix = row.fixedVersion === null ? 'no fix published' : `fix ${row.fixedVersion}`;
       left.push(
@@ -362,7 +379,7 @@ function overviewLines(
       );
     }
   } else {
-    left.push(bold(caps, ' Top priority'));
+    left.push(heading(caps, 'Top priority'));
     left.push(dim(caps, '  no findings to rank'));
   }
   left.push('');
@@ -383,7 +400,7 @@ function overviewLines(
   if (!robotColumn) {
     return left;
   }
-  const robot = forgeFrame(orbFor(model), ROBOT_WIDTH, Math.min(height, 16), caps, t);
+  const robot = forgeArt(orbFor(model), caps, t);
   const merged: string[] = [];
   const rows = Math.max(left.length, robot.length);
   for (let i = 0; i < rows; i++) {
@@ -412,7 +429,7 @@ function startScanLines(
   const boxV = caps.unicode ? '│' : '|';
   const lines: string[] = [];
   lines.push('');
-  lines.push(` ${bold(caps, 'Start New Scan')}`);
+  lines.push(heading(caps, 'Start New Scan'));
   lines.push('');
   const cursor = model.inputFocused ? (caps.unicode ? '▌' : '_') : ' ';
   const inputText = cell(` ${model.input}${cursor}`, inner);
@@ -432,7 +449,7 @@ function startScanLines(
   lines.push('');
 
   if (model.preflight !== null) {
-    lines.push(bold(caps, '  Preflight'));
+    lines.push(heading(caps, 'Preflight'));
     const pf = model.preflight;
     lines.push(factLine(caps, 'target exists', pf.exists, pf.target));
     lines.push(
@@ -526,7 +543,7 @@ function findingsLines(
     .join(' · ');
   const ignored = findings.ignoredCount > 0 ? ` · ${findings.ignoredCount} ignored by rules` : '';
   lines.push('');
-  lines.push(` ${bold(caps, `${findings.rows.length} findings`)} ${dim(caps, counts + ignored)}`);
+  lines.push(heading(caps, `${findings.rows.length} findings`, counts + ignored));
   lines.push('');
 
   const idWidth = 22;
@@ -589,7 +606,11 @@ function treeLines(
 
   const lines: string[] = [''];
   lines.push(
-    ` ${bold(caps, `${tree.nodes.size} packages`)} ${dim(caps, `${model.report.stats.directPackages} direct · ${model.report.stats.transitivePackages} transitive`)}`,
+    heading(
+      caps,
+      `${tree.nodes.size} packages`,
+      `${model.report.stats.directPackages} direct · ${model.report.stats.transitivePackages} transitive`,
+    ),
   );
   lines.push('');
 
@@ -625,7 +646,7 @@ function treeLines(
 
 function aiLines(
   model: TuiModel,
-  width: number,
+  _width: number,
   height: number,
   caps: RenderCapabilities,
   t: number,
@@ -633,17 +654,15 @@ function aiLines(
   const agent = agentStateFor(model.scan.state);
   const lines: string[] = [''];
   lines.push(
-    ` ${bold(caps, 'Forge')} ${dim(caps, 'explains and suggests only — never creates findings, never fails a scan')}`,
+    heading(
+      caps,
+      'Forge',
+      'explains and suggests only — never creates findings, never fails a scan',
+    ),
   );
   lines.push(` state: ${agent}`);
   lines.push('');
-  const robot = forgeFrame(
-    orbFor(model),
-    Math.min(width - 4, 44),
-    Math.min(height - 8, 14),
-    caps,
-    t,
-  );
+  const robot = forgeArt(orbFor(model), caps, t);
   lines.push(...robot.map((row) => ` ${row}`));
   lines.push('');
 
@@ -658,7 +677,7 @@ function aiLines(
     lines.push(dim(caps, '  run with --suggest after configuring Forge to generate them.'));
     return lines;
   }
-  lines.push(bold(caps, ` ${model.report.suggestions.length} AI suggestions`));
+  lines.push(heading(caps, `${model.report.suggestions.length} AI suggestions`));
   for (const suggestion of model.report.suggestions.slice(0, Math.max(1, height - 12))) {
     const safer = suggestion.saferVersion === null ? '' : ` → ${suggestion.saferVersion}`;
     const alt =
@@ -678,7 +697,7 @@ function historyLines(
   caps: RenderCapabilities,
 ): string[] {
   const lines: string[] = [''];
-  lines.push(` ${bold(caps, 'Scan History')} ${dim(caps, 'this session')}`);
+  lines.push(heading(caps, 'Scan History', 'this session'));
   lines.push('');
   if (model.sessionRuns.length === 0) {
     lines.push(dim(caps, '  no scans this session yet — press s to run one.'));
@@ -712,7 +731,7 @@ function reportsLines(
   }
   const report: Report = model.report;
   const lines: string[] = [''];
-  lines.push(` ${bold(caps, 'Current report')}`);
+  lines.push(heading(caps, 'Current report'));
   lines.push('');
   lines.push(`  ${cell('source', 16)} ${model.reportSource ?? 'unknown'}`);
   lines.push(`  ${cell('project', 16)} ${report.meta.projectName}`);
@@ -748,9 +767,7 @@ function settingsLines(
 ): string[] {
   const env = model.env;
   const lines: string[] = [''];
-  lines.push(
-    ` ${bold(caps, 'Settings')} ${dim(caps, 'presence only — no secret values are ever shown')}`,
-  );
+  lines.push(heading(caps, 'Settings', 'presence only — no secret values are ever shown'));
   lines.push('');
   lines.push(`  ${cell('tool version', 18)} ${env.toolVersion}`);
   lines.push(`  ${cell('node', 18)} ${env.nodeVersion}`);
@@ -779,13 +796,19 @@ function liveMonitorLines(
   const lines: string[] = [''];
   const started = scan.startedAt === null ? '' : ` · started ${scan.startedAt}`;
   lines.push(
-    ` ${bold(caps, 'Live Monitor')} ${dim(caps, `${scan.state}${scan.target === null ? '' : ` · ${scan.target}`}${started}`)}`,
+    heading(caps, 'Live Monitor') +
+      ` ${dim(caps, `${scan.state}${scan.target === null ? '' : ` · ${scan.target}`}${started}`)}`,
   );
   const queryText =
     scan.queriesTotal > 0
       ? `Querying OSV — ${scan.queriesDone} / ${scan.queriesTotal} queries${scan.lastPackage === null ? '' : ` · ${scan.lastPackage}`}`
       : 'preparing scan…';
   lines.push(` ${fg(caps, TUI_COLORS.accent, queryText)}`);
+  if (scan.queriesTotal > 0) {
+    lines.push(
+      ` ${progressBar(caps, scan.queriesDone, scan.queriesTotal, Math.max(10, Math.min(width - 24, 48)))} ${dim(caps, `${scan.queriesDone}/${scan.queriesTotal} queries`)}`,
+    );
+  }
   if (scan.state === 'error' && scan.errorMessage !== null) {
     lines.push(` ${fg(caps, TUI_COLORS.severityCritical, scan.errorMessage)}`);
   }
@@ -808,13 +831,7 @@ function liveMonitorLines(
       );
     }
   } else {
-    const robot = forgeFrame(
-      orbFor(model),
-      Math.min(width - 4, 40),
-      Math.min(visualHeight, 12),
-      caps,
-      t,
-    );
+    const robot = forgeArt(orbFor(model), caps, t);
     lines.push(...robot.map((row) => ` ${row}`));
   }
 
