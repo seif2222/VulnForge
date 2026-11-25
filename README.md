@@ -329,3 +329,10 @@ this README does not assign unverified names or roles.
 itself an open-source license. Do not assume reuse, modification, or redistribution
 rights beyond applicable law. The team should agree on a license before a release.
 Third-party code, models, datasets, and fonts retain their own terms.
+
+## Experimental source classifier (feature branch)
+
+The opt-in `source` command produces a separate report of unconfirmed C-function
+predictions using a local trained Forge adapter service. It does not change OSV
+findings, CVE counts, gates, the dashboard or the TUI. Actual weights and hardware
+rehearsal are required. See [setup and limits](docs/forge-source-detector.md).

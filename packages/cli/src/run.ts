@@ -1,3 +1,4 @@
+import { writeFileSync, renameSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 
@@ -11,6 +12,7 @@ import {
   type Severity,
 } from '@vulnforge/core';
 import {
+  scanSource,
   ForgeError,
   attachSuggestions,
   createForgeClient,
@@ -308,6 +310,39 @@ export async function runCli(
   const parsed = parseArgs(argv);
 
   switch (parsed.kind) {
+    case 'source': {
+      const endpoint = io.env.VULNFORGE_SOURCE_ENDPOINT;
+      if (endpoint === undefined || endpoint === '') {
+        io.stderr(
+          'forge source: set VULNFORGE_SOURCE_ENDPOINT to a loopback inference endpoint; no code read or sent\n',
+        );
+        return EXIT_CODES.usage;
+      }
+      const out = resolve(io.cwd, parsed.flags.out);
+      const temporary = `${out}.${process.pid}.tmp`;
+      try {
+        const result = await scanSource(resolve(io.cwd, parsed.flags.path), {
+          endpoint,
+          threshold: parsed.flags.threshold,
+          ...(deps.signal === undefined ? {} : { signal: deps.signal }),
+        });
+        const json = `${JSON.stringify(result, null, 2)}\n`;
+        writeFileSync(temporary, json, { encoding: 'utf8', flag: 'wx' });
+        renameSync(temporary, out);
+        io.stdout(json);
+        io.stderr(
+          `forge source: ${result.status}; ${result.predictions.filter((p) => p.candidate).length} unconfirmed candidate(s). OSV findings and gates unchanged.\n`,
+        );
+        return result.status === 'completed' ? EXIT_CODES.success : EXIT_CODES.incomplete;
+      } catch {
+        rmSync(temporary, { force: true });
+        io.stderr(
+          'forge source: configuration, source read or report write failed; no successful analysis claimed\n',
+        );
+        return EXIT_CODES.usage;
+      }
+    }
+
     case 'help':
       io.stdout(`${usage(io.version)}\n`);
       return EXIT_CODES.success;

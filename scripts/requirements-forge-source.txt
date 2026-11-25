@@ -1,0 +1,12 @@
+# Optional inference environment only. Not part of the scanner's Node install.
+# Python 3.11 recommended. Install the appropriate CPU/CUDA torch wheel first.
+# Training used TRL 1.18.2, transformers 5.22.1, torch 2.14.1+cu130, peft 0.21.2.
+# peft>=0.21.2 is required because the saved adapter_config.json contains fields
+# older peft releases do not know. Ranges still require a real hardware
+# rehearsal before being called supported; freeze exact versions afterwards.
+torch>=2.6,<3
+transformers>=4.51
+peft>=0.21.2,<1
+accelerate>=1.6,<2
+safetensors>=0.5,<1
+bitsandbytes>=0.45,<1

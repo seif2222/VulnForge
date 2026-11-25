@@ -20,7 +20,14 @@ export interface AnalyzeFlags {
   readonly suggest: boolean;
 }
 
+export interface SourceFlags {
+  readonly path: string;
+  readonly out: string;
+  readonly threshold: number;
+}
+
 export type ParsedArgs =
+  | { readonly kind: 'source'; readonly flags: SourceFlags }
   | { readonly kind: 'analyze'; readonly flags: AnalyzeFlags }
   | { readonly kind: 'dashboard'; readonly flags: DashboardFlags }
   | { readonly kind: 'ui'; readonly flags: UiFlags }
@@ -79,6 +86,32 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   }
   if (first === '--version' || first === '-v' || first === 'version') {
     return { kind: 'version' };
+  }
+  if (first === 'source') {
+    let path = '.';
+    let hasPath = false;
+    let out = 'forge-source-report.json';
+    let threshold = 0;
+    for (let i = 0; i < rest.length; i++) {
+      const arg = rest[i] as string;
+      if (arg === '--out' || arg === '--threshold') {
+        const value = rest[++i];
+        if (value === undefined || value.trim() === '' || value.startsWith('--'))
+          return usageError(`${arg} needs a value`);
+        if (arg === '--out') out = value;
+        else {
+          threshold = Number(value);
+          if (!Number.isFinite(threshold))
+            return usageError('--threshold needs a finite logit margin');
+        }
+      } else if (arg.startsWith('-')) return usageError(`unknown source flag: ${arg}`);
+      else if (hasPath) return usageError('source takes one project path');
+      else {
+        path = arg;
+        hasPath = true;
+      }
+    }
+    return { kind: 'source', flags: { path, out, threshold } };
   }
   if (first === 'ui') {
     let reportPath: string | null = null;
